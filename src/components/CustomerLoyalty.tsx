@@ -1,22 +1,26 @@
 import React, { useState } from "react";
-import { Award, Users, Zap, TrendingUp, Crown, Gift, Share2, CheckCircle2, Copy, AlertCircle, UserCheck, Loader } from "lucide-react";
+import { Award, Users, Zap, TrendingUp, Crown, Gift, Share2, CheckCircle2, Copy, AlertCircle, UserCheck, Loader, Flame, Target, Sparkles, Heart } from "lucide-react";
 import { toast } from "sonner";
 import { useQuery, useMutation } from "convex/react";
 import { api } from "../../convex/_generated/api";
 
 interface LoyaltyCustomer {
-  _id: any; // Id<"customerLoyalty">
-  customerId: any; // Id<"customers">
+  _id: any;
+  customerId: any;
   customerName: string;
   email?: string;
   phone?: string;
-  currentTier: string; // "Bronze" | "Silver" | "Gold" | "Platinum"
+  currentTier: string;
   totalPoints: number;
   availablePoints: number;
+  redeemedPoints?: number;
   totalSpent: number;
   totalOrders: number;
   referralCode: string;
+  referredCustomers?: any[];
   membershipDate: number;
+  lastActivityDate?: number;
+  isActive?: boolean;
 }
 
 interface LoyaltyStats {
@@ -27,7 +31,13 @@ interface LoyaltyStats {
   tierDistribution: Record<string, number>;
 }
 
-// Demo data as fallback for UI during loading and for development
+const TIER_CONFIG = {
+  Bronze: { min: 0, max: 1000, color: "from-amber-500 to-amber-600", lightColor: "from-amber-50 to-amber-100", icon: "🥉" },
+  Silver: { min: 1000, max: 5000, color: "from-slate-400 to-slate-600", lightColor: "from-slate-50 to-slate-100", icon: "🥈" },
+  Gold: { min: 5000, max: 10000, color: "from-yellow-400 to-yellow-600", lightColor: "from-yellow-50 to-yellow-100", icon: "🥇" },
+  Platinum: { min: 10000, max: Infinity, color: "from-blue-500 to-purple-600", lightColor: "from-blue-50 to-purple-100", icon: "💎" },
+};
+
 const FALLBACK_CUSTOMERS: LoyaltyCustomer[] = [
   {
     _id: "fallback1",
@@ -38,6 +48,7 @@ const FALLBACK_CUSTOMERS: LoyaltyCustomer[] = [
     currentTier: "Gold",
     totalPoints: 5250,
     availablePoints: 3500,
+    redeemedPoints: 1750,
     totalSpent: 12500,
     totalOrders: 45,
     referralCode: "AHMED2025",
@@ -52,6 +63,7 @@ const FALLBACK_CUSTOMERS: LoyaltyCustomer[] = [
     currentTier: "Platinum",
     totalPoints: 8750,
     availablePoints: 6200,
+    redeemedPoints: 2550,
     totalSpent: 28900,
     totalOrders: 89,
     referralCode: "FATIMA2025",
@@ -66,6 +78,7 @@ const FALLBACK_CUSTOMERS: LoyaltyCustomer[] = [
     currentTier: "Silver",
     totalPoints: 2100,
     availablePoints: 1800,
+    redeemedPoints: 300,
     totalSpent: 4200,
     totalOrders: 18,
     referralCode: "MOHAMM2025",
@@ -87,284 +100,244 @@ const FALLBACK_STATS: LoyaltyStats = {
 };
 
 export default function CustomerLoyalty() {
-  const [activeTab, setActiveTab] = useState<"overview" | "stats" | "tiers" | "referral">("overview");
+  const [activeTab, setActiveTab] = useState<"overview" | "members" | "tiers" | "referral" | "transactions">("overview");
   const [selectedCustomerId, setSelectedCustomerId] = useState<string | null>(null);
+  const [showReferralModal, setShowReferralModal] = useState(false);
+  const [showRedeemModal, setShowRedeemModal] = useState(false);
+  const [referralData, setReferralData] = useState({ referredName: "", referredPhone: "", bonusPoints: 100 });
+  const [redeemData, setRedeemData] = useState({ pointsToRedeem: 0, reason: "discount" });
+  const [isCreatingReferral, setIsCreatingReferral] = useState(false);
+  const [isRedeeming, setIsRedeeming] = useState(false);
 
-  // Real data queries from Convex
-  const allCustomers = useQuery(api.loyalty?.getTopCustomers, {}) ?? [];
+  // Real data from Convex
+  const allCustomers = useQuery(api.loyalty?.getTopCustomers, { limit: 50 }) ?? [];
   const loyaltyStats = useQuery(api.loyalty?.getLoyaltyStats, {}) ?? null;
-  const createReferral = useMutation(api.loyalty?.createReferral);
+  const createReferralMutation = useMutation(api.loyalty?.createReferral);
+  const redeemPointsMutation = useMutation(api.loyalty?.redeemPoints);
 
-  // Use real data if available, fallback to demo data
-  const customers: LoyaltyCustomer[] = (allCustomers && allCustomers.length > 0 ? allCustomers : FALLBACK_CUSTOMERS) as LoyaltyCustomer[];
+  const customers = (allCustomers && allCustomers.length > 0 ? allCustomers : FALLBACK_CUSTOMERS) as LoyaltyCustomer[];
   const stats = loyaltyStats || FALLBACK_STATS;
-  
-  // Set first customer as default on first load
+  const selectedCustomer = customers.find((c) => c._id === selectedCustomerId) || customers[0];
+  const isLoading = !allCustomers || !loyaltyStats;
+
   React.useEffect(() => {
     if (!selectedCustomerId && customers.length > 0) {
       setSelectedCustomerId(customers[0]._id);
     }
   }, [customers, selectedCustomerId]);
 
-  const selectedCustomer = customers.find((c) => c._id === selectedCustomerId) || customers[0];
-  const isLoadingData = !allCustomers || !loyaltyStats;
-
-  const [showReferralModal, setShowReferralModal] = useState(false);
-  const [referralData, setReferralData] = useState({
-    referredName: "",
-    referredPhone: "",
-    bonusPoints: 100,
-  });
-  const [isCreatingReferral, setIsCreatingReferral] = useState(false);
-
-  const getTierColor = (tier: string) => {
-    const colors: Record<string, string> = {
-      Bronze: "from-amber-600 to-amber-700",
-      Silver: "from-slate-400 to-slate-500",
-      Gold: "from-yellow-500 to-yellow-600",
-      Platinum: "from-blue-500 to-purple-600",
-    };
-    return colors[tier] || "from-gray-400 to-gray-500";
-  };
-
-  const getTierBadge = (tier: string) => {
-    const colors: Record<string, string> = {
-      Bronze: "bg-amber-100 text-amber-800 border-amber-300",
-      Silver: "bg-slate-100 text-slate-800 border-slate-300",
-      Gold: "bg-yellow-100 text-yellow-800 border-yellow-300",
-      Platinum: "bg-blue-100 text-blue-800 border-blue-300",
-    };
-    return colors[tier] || "bg-gray-100 text-gray-800 border-gray-300";
-  };
-
-  const copyToClipboard = (text: string) => {
-    navigator.clipboard.writeText(text);
-    toast.success("Copied to clipboard!");
-  };
+  const getTierConfig = (tier: string) => (TIER_CONFIG as any)[tier] || TIER_CONFIG.Bronze;
 
   const handleCreateReferral = async () => {
-    if (!referralData.referredName) {
-      toast.error("Please fill in customer name");
+    if (!referralData.referredName || !selectedCustomer?.customerId) {
+      toast.error("Please fill in required fields");
       return;
     }
-    if (!selectedCustomer?._id) {
-      toast.error("Please select a customer");
-      return;
-    }
-
     setIsCreatingReferral(true);
     try {
-      await createReferral({
+      await createReferralMutation({
         referrerId: selectedCustomer.customerId as any,
         referrerName: selectedCustomer.customerName,
         referrerPhone: selectedCustomer.phone,
         referredName: referralData.referredName,
-        referredPhone: referralData.referredPhone,
+        referredPhone: referralData.referredPhone || undefined,
         bonusPoints: referralData.bonusPoints,
       });
       toast.success(`Referral created for ${referralData.referredName}!`);
       setReferralData({ referredName: "", referredPhone: "", bonusPoints: 100 });
       setShowReferralModal(false);
-    } catch (error) {
-      toast.error("Failed to create referral. Please try again.");
-      console.error("Referral creation error:", error);
+    } catch (error: any) {
+      toast.error(error.message || "Failed to create referral");
     } finally {
       setIsCreatingReferral(false);
     }
   };
 
+  const handleRedeemPoints = async () => {
+    if (redeemData.pointsToRedeem <= 0 || !selectedCustomer?.customerId) {
+      toast.error("Invalid points to redeem");
+      return;
+    }
+    if (redeemData.pointsToRedeem > (selectedCustomer?.availablePoints || 0)) {
+      toast.error("Insufficient points");
+      return;
+    }
+    setIsRedeeming(true);
+    try {
+      await redeemPointsMutation({
+        customerId: selectedCustomer.customerId as any,
+        pointsToRedeem: redeemData.pointsToRedeem,
+        reason: redeemData.reason,
+      });
+      toast.success("Points redeemed successfully!");
+      setRedeemData({ pointsToRedeem: 0, reason: "discount" });
+      setShowRedeemModal(false);
+    } catch (error: any) {
+      toast.error(error.message || "Failed to redeem points");
+    } finally {
+      setIsRedeeming(false);
+    }
+  };
+
+  const copyToClipboard = (text: string) => {
+    navigator.clipboard.writeText(text);
+    toast.success("Copied!");
+  }
+
+  // ====================== RENDER ======================
+
   return (
-    <div className="space-y-4 sm:space-y-6">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <div className="flex items-center gap-3">
-          <Award className="w-6 sm:w-8 h-6 sm:h-8 text-blue-600 flex-shrink-0" />
-          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">Customer Loyalty & Rewards</h1>
-        </div>
-        {isLoadingData && (
-          <div className="flex items-center gap-2 text-blue-600">
-            <Loader className="w-4 h-4 animate-spin" />
-            <span className="text-xs sm:text-sm">Loading real data...</span>
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-50">
+      <div className="space-y-6 p-4 sm:p-6 max-w-7xl mx-auto">
+        {/* Header */}
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+          <div>
+            <h1 className="text-3xl sm:text-4xl font-bold text-gray-900 flex items-center gap-2">
+              <Award className="w-8 h-8 text-purple-600" />
+              Customer Loyalty & Rewards
+            </h1>
+            <p className="text-sm text-gray-600 mt-1">Manage customer loyalty programs and rewards</p>
           </div>
-        )}
-      </div>
-
-      {/* Statistics Cards - Responsive Grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
-        <div className="bg-white rounded-lg border border-gray-200 shadow-sm p-4 sm:p-6 hover:shadow-md transition-shadow">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-xs sm:text-sm text-gray-600 font-medium">Total Members</p>
-              <p className="text-2xl sm:text-3xl font-bold text-gray-900 mt-1">
-                {isLoadingData ? <Loader className="w-6 h-6 animate-spin text-gray-400" /> : stats.totalMembers}
-              </p>
+          {isLoading && (
+            <div className="flex items-center gap-2 text-blue-600 text-sm">
+              <Loader className="w-4 h-4 animate-spin" />
+              Loading...
             </div>
-            <Users className="w-8 sm:w-10 h-8 sm:h-10 text-blue-600 opacity-20 flex-shrink-0" />
-          </div>
+          )}
         </div>
 
-        <div className="bg-white rounded-lg border border-gray-200 shadow-sm p-4 sm:p-6 hover:shadow-md transition-shadow">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-xs sm:text-sm text-gray-600 font-medium">Active Coupons</p>
-              <p className="text-2xl sm:text-3xl font-bold text-gray-900 mt-1">
-                {isLoadingData ? <Loader className="w-6 h-6 animate-spin text-gray-400" /> : stats.activeCoupons}
-              </p>
+        {/* Statistics Cards - iOS Style */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
+          <div className="group bg-white/80 backdrop-blur-sm rounded-3xl p-5 sm:p-6 shadow-sm hover:shadow-md border border-white/60 transition-all duration-300">
+            <div className="flex items-start justify-between">
+              <div className="flex-1">
+                <p className="text-xs sm:text-sm font-semibold text-gray-500 uppercase tracking-wide mb-2">Total Members</p>
+                <p className="text-2xl sm:text-3xl font-bold text-gray-900">{isLoading ? "..." : stats.totalMembers}</p>
+                <p className="text-xs text-gray-400 mt-2 font-medium">Active customers</p>
+              </div>
+              <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-blue-100 to-blue-50 flex items-center justify-center text-xl group-hover:scale-110 transition-transform duration-300">👥</div>
             </div>
-            <Gift className="w-8 sm:w-10 h-8 sm:h-10 text-orange-600 opacity-20 flex-shrink-0" />
           </div>
-        </div>
 
-        <div className="bg-white rounded-lg border border-gray-200 shadow-sm p-4 sm:p-6 hover:shadow-md transition-shadow">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-xs sm:text-sm text-gray-600 font-medium">Points Issued</p>
-              <p className="text-2xl sm:text-3xl font-bold text-gray-900 mt-1">
-                {isLoadingData ? <Loader className="w-6 h-6 animate-spin text-gray-400" /> : (stats.totalPointsIssued / 1000).toFixed(1) + "K"}
-              </p>
+          <div className="group bg-white/80 backdrop-blur-sm rounded-3xl p-5 sm:p-6 shadow-sm hover:shadow-md border border-white/60 transition-all duration-300">
+            <div className="flex items-start justify-between">
+              <div className="flex-1">
+                <p className="text-xs sm:text-sm font-semibold text-gray-500 uppercase tracking-wide mb-2">Active Coupons</p>
+                <p className="text-2xl sm:text-3xl font-bold text-gray-900">{isLoading ? "..." : stats.activeCoupons}</p>
+                <p className="text-xs text-gray-400 mt-2 font-medium">Running promotions</p>
+              </div>
+              <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-orange-100 to-orange-50 flex items-center justify-center text-xl group-hover:scale-110 transition-transform duration-300">🎁</div>
             </div>
-            <Zap className="w-8 sm:w-10 h-8 sm:h-10 text-yellow-600 opacity-20 flex-shrink-0" />
           </div>
-        </div>
 
-        <div className="bg-white rounded-lg border border-gray-200 shadow-sm p-4 sm:p-6 hover:shadow-md transition-shadow">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-xs sm:text-sm text-gray-600 font-medium">Points Redeemed</p>
-              <p className="text-2xl sm:text-3xl font-bold text-gray-900 mt-1">
-                {isLoadingData ? <Loader className="w-6 h-6 animate-spin text-gray-400" /> : (stats.totalPointsRedeemed / 1000).toFixed(1) + "K"}
-              </p>
+          <div className="group bg-white/80 backdrop-blur-sm rounded-3xl p-5 sm:p-6 shadow-sm hover:shadow-md border border-white/60 transition-all duration-300">
+            <div className="flex items-start justify-between">
+              <div className="flex-1">
+                <p className="text-xs sm:text-sm font-semibold text-gray-500 uppercase tracking-wide mb-2">Points Issued</p>
+                <p className="text-2xl sm:text-3xl font-bold text-gray-900">{isLoading ? "..." : (stats.totalPointsIssued / 1000).toFixed(1)}K</p>
+                <p className="text-xs text-gray-400 mt-2 font-medium">Total distributed</p>
+              </div>
+              <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-yellow-100 to-yellow-50 flex items-center justify-center text-xl group-hover:scale-110 transition-transform duration-300">⚡</div>
             </div>
-            <TrendingUp className="w-8 sm:w-10 h-8 sm:h-10 text-green-600 opacity-20 flex-shrink-0" />
           </div>
-        </div>
-      </div>
 
-      {/* Tier Distribution Cards */}
-      <div className="bg-white rounded-lg border border-gray-200 shadow-sm p-4 sm:p-6">
-        <h2 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
-          <Crown className="w-5 h-5 text-blue-600" />
-          Member Tier Distribution
-        </h2>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
-          {Object.entries(stats.tierDistribution).map(([tier, count]) => (
-            <div
-              key={tier}
-              className={`bg-gradient-to-br ${getTierColor(tier)} rounded-lg p-4 sm:p-6 text-white`}
-            >
-              <p className="text-xs sm:text-sm opacity-90">{tier} Members</p>
-              <p className="text-3xl sm:text-4xl font-bold mt-2">{isLoadingData ? "..." : String(count)}</p>
+          <div className="group bg-white/80 backdrop-blur-sm rounded-3xl p-5 sm:p-6 shadow-sm hover:shadow-md border border-white/60 transition-all duration-300">
+            <div className="flex items-start justify-between">
+              <div className="flex-1">
+                <p className="text-xs sm:text-sm font-semibold text-gray-500 uppercase tracking-wide mb-2">Redeemed</p>
+                <p className="text-2xl sm:text-3xl font-bold text-gray-900">{isLoading ? "..." : (stats.totalPointsRedeemed / 1000).toFixed(1)}K</p>
+                <p className="text-xs text-gray-400 mt-2 font-medium">Total redeemed</p>
+              </div>
+              <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-green-100 to-green-50 flex items-center justify-center text-xl group-hover:scale-110 transition-transform duration-300">✅</div>
             </div>
-          ))}
-        </div>
-      </div>
-
-      {/* Customer Selection */}
-      <div className="bg-white rounded-lg border border-gray-200 shadow-sm p-4 sm:p-6">
-        <h2 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
-          <UserCheck className="w-5 h-5 text-blue-600" />
-          Select Customer
-        </h2>
-        {isLoadingData ? (
-          <div className="flex items-center gap-2 text-gray-600">
-            <Loader className="w-4 h-4 animate-spin" />
-            <span className="text-sm">Loading customers...</span>
           </div>
-        ) : (
-          <select
-            value={selectedCustomerId || ""}
-            onChange={(e) => setSelectedCustomerId(e.target.value || null)}
-            className="w-full px-3 sm:px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-          >
-            <option value="">Select a customer...</option>
-            {customers.map((customer) => (
-              <option key={customer._id} value={customer._id}>
-                {customer.customerName} ({customer.currentTier} - {customer.totalPoints} pts)
-              </option>
+        </div>
+
+        {/* Tier Distribution */}
+        <div className="bg-white/80 backdrop-blur-sm rounded-3xl p-6 sm:p-8 shadow-sm border border-white/60">
+          <h2 className="text-lg sm:text-xl font-bold text-gray-900 mb-6 flex items-center gap-2">
+            <Crown className="w-6 h-6 text-purple-600" />
+            Tier Distribution
+          </h2>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            {Object.entries(TIER_CONFIG).map(([tier, config]: any) => (
+              <div key={tier} className={`bg-gradient-to-br ${config.color} rounded-2xl p-4 sm:p-6 text-white`}>
+                <div className="flex items-center justify-between mb-2">
+                  <h3 className="font-semibold text-lg">{config.icon} {tier}</h3>
+                  <Users className="w-5 h-5 opacity-50" />
+                </div>
+                <p className="text-3xl font-bold">{isLoading ? "..." : (stats.tierDistribution[tier as keyof typeof stats.tierDistribution] || 0)}</p>
+                <p className="text-xs opacity-75 mt-2">Members</p>
+              </div>
             ))}
-          </select>
-        )}
-      </div>
+          </div>
+        </div>
 
-      {/* Tabs */}
-      {selectedCustomer && (
-        <div className="bg-white rounded-lg border border-gray-200 shadow-sm overflow-hidden">
-          {/* Tab Navigation */}
-          <div className="border-b border-gray-200 flex flex-wrap">
-            {[
-              { id: "overview", label: "Overview", icon: "👤" },
-              { id: "stats", label: "Statistics", icon: "📊" },
-              { id: "tiers", label: "Tier Benefits", icon: "👑" },
-              { id: "referral", label: "Referral", icon: "🔗" },
-            ].map((tab) => (
-              <button
-                key={tab.id}
-                onClick={() => setActiveTab(tab.id as any)}
-                className={`flex-1 sm:flex-none px-3 sm:px-6 py-3 text-xs sm:text-sm font-medium border-b-2 transition-colors ${
-                  activeTab === tab.id
-                    ? "border-blue-600 text-blue-600 bg-blue-50"
-                    : "border-transparent text-gray-600 hover:text-gray-900"
-                }`}
+        {/* Customer Selection & Tabs */}
+        {customers.length > 0 && (
+          <>
+            {/* Customer Selector */}
+            <div className="bg-white/80 backdrop-blur-sm rounded-3xl p-6 sm:p-8 shadow-sm border border-white/60">
+              <label className="block text-sm font-semibold text-gray-900 mb-3">Select Customer</label>
+              <select
+                value={selectedCustomerId || ""}
+                onChange={(e) => setSelectedCustomerId(e.target.value)}
+                className="w-full px-4 py-3 rounded-2xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-purple-600 font-medium transition-all"
               >
-                <span className="mr-1 sm:mr-2">{tab.icon}</span>
-                <span className="hidden sm:inline">{tab.label}</span>
-              </button>
-            ))}
-          </div>
+                {customers.map((c) => (
+                  <option key={c._id} value={c._id}>
+                    {c.customerName} • {c.currentTier} • {c.totalPoints.toLocaleString()} pts
+                  </option>
+                ))}
+              </select>
+            </div>
 
-          {/* Tab Content */}
-          <div className="p-4 sm:p-6">
-            {/* Overview Tab */}
-            {activeTab === "overview" && (
-              <div className="space-y-4 sm:space-y-6">
-                {/* Loyalty Card */}
-                <div className={`bg-gradient-to-br ${getTierColor(selectedCustomer.currentTier)} rounded-lg p-4 sm:p-8 text-white shadow-lg`}>
-                  <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between mb-4 sm:mb-6 gap-3">
-                    <div>
-                      <p className="text-white/80 text-xs sm:text-sm">Loyalty Member</p>
-                      <h3 className="text-xl sm:text-2xl font-bold mt-1">{selectedCustomer.customerName}</h3>
+            {selectedCustomer && (
+              <div className="space-y-6">
+                {/* Loyalty Card - Premium */}
+                <div className={`bg-gradient-to-br ${getTierConfig(selectedCustomer.currentTier).color} rounded-3xl p-6 sm:p-8 text-white shadow-lg`}>
+                  <div className="flex items-start justify-between mb-6 gap-4">
+                    <div className="flex-1">
+                      <p className="text-white/70 text-xs sm:text-sm font-semibold uppercase">Loyalty Member</p>
+                      <h3 className="text-2xl sm:text-3xl font-bold mt-2">{selectedCustomer.customerName}</h3>
+                      <p className="text-white/60 text-sm mt-1">Member since {new Date(selectedCustomer.membershipDate).getFullYear()}</p>
                     </div>
-                    <Crown className="w-6 sm:w-8 h-6 sm:h-8 opacity-30 flex-shrink-0" />
+                    <div className="text-5xl">{getTierConfig(selectedCustomer.currentTier).icon}</div>
                   </div>
 
-                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4 mb-4 sm:mb-6">
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4 mb-6 pb-6 border-b border-white/20">
                     <div>
-                      <p className="text-white/80 text-xs">Current Tier</p>
-                      <p className="text-lg sm:text-xl font-semibold mt-1">{selectedCustomer.currentTier}</p>
+                      <p className="text-white/70 text-xs font-semibold uppercase">Tier</p>
+                      <p className="text-xl sm:text-2xl font-bold mt-1">{selectedCustomer.currentTier}</p>
                     </div>
                     <div>
-                      <p className="text-white/80 text-xs">Total Points</p>
-                      <p className="text-lg sm:text-xl font-semibold mt-1">{selectedCustomer.totalPoints.toLocaleString()}</p>
+                      <p className="text-white/70 text-xs font-semibold uppercase">Total Points</p>
+                      <p className="text-xl sm:text-2xl font-bold mt-1">{selectedCustomer.totalPoints.toLocaleString()}</p>
                     </div>
                     <div>
-                      <p className="text-white/80 text-xs">Available</p>
-                      <p className="text-lg sm:text-xl font-semibold mt-1">{selectedCustomer.availablePoints.toLocaleString()}</p>
+                      <p className="text-white/70 text-xs font-semibold uppercase">Available</p>
+                      <p className="text-xl sm:text-2xl font-bold mt-1">{selectedCustomer.availablePoints.toLocaleString()}</p>
                     </div>
                     <div>
-                      <p className="text-white/80 text-xs">Member Since</p>
-                      <p className="text-lg sm:text-xl font-semibold mt-1">{new Date(selectedCustomer.membershipDate).getFullYear()}</p>
+                      <p className="text-white/70 text-xs font-semibold uppercase">Redeemed</p>
+                      <p className="text-xl sm:text-2xl font-bold mt-1">{(selectedCustomer.redeemedPoints || 0).toLocaleString()}</p>
                     </div>
                   </div>
 
-                  <div className="pt-4 sm:pt-6 border-t border-white/20 grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-6">
                     <div>
-                      <p className="text-white/80 text-xs">Total Spent</p>
-                      <p className="text-2xl sm:text-3xl font-bold mt-1">AED {selectedCustomer.totalSpent.toLocaleString()}</p>
+                      <p className="text-white/70 text-xs font-semibold uppercase">Total Spent</p>
+                      <p className="text-2xl sm:text-3xl font-bold mt-2">AED {selectedCustomer.totalSpent.toLocaleString()}</p>
                     </div>
                     <div>
-                      <p className="text-white/80 text-xs">Total Orders</p>
-                      <p className="text-2xl sm:text-3xl font-bold mt-1">{selectedCustomer.totalOrders}</p>
+                      <p className="text-white/70 text-xs font-semibold uppercase">Orders Made</p>
+                      <p className="text-2xl sm:text-3xl font-bold mt-2">{selectedCustomer.totalOrders}</p>
                     </div>
                     <div>
-                      <p className="text-white/80 text-xs">Referral Code</p>
-                      <div className="flex items-center gap-2 mt-1">
-                        <code className="text-xs sm:text-sm font-mono font-bold bg-white/20 px-2 py-1 rounded">
-                          {selectedCustomer.referralCode}
-                        </code>
-                        <button
-                          onClick={() => copyToClipboard(selectedCustomer.referralCode)}
-                          className="p-1 hover:bg-white/20 rounded transition-colors"
-                        >
+                      <p className="text-white/70 text-xs font-semibold uppercase">Referral Code</p>
+                      <div className="flex items-center gap-2 mt-2">
+                        <code className="text-sm font-mono font-bold bg-white/20 px-2 py-1 rounded flex-1 truncate">{selectedCustomer.referralCode}</code>
+                        <button onClick={() => copyToClipboard(selectedCustomer.referralCode)} className="p-2 hover:bg-white/20 rounded transition-colors">
                           <Copy className="w-4 h-4" />
                         </button>
                       </div>
@@ -372,212 +345,268 @@ export default function CustomerLoyalty() {
                   </div>
                 </div>
 
-                {/* Action Buttons */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
-                  <button
-                    onClick={() => setShowReferralModal(true)}
-                    className="flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700 text-white font-medium py-3 px-4 sm:px-6 rounded-lg transition-colors"
-                  >
-                    <Share2 className="w-4 sm:w-5 h-4 sm:h-5" />
-                    Create Referral
-                  </button>
-                  <button className="flex items-center justify-center gap-2 bg-slate-600 hover:bg-slate-700 text-white font-medium py-3 px-4 sm:px-6 rounded-lg transition-colors">
-                    <Gift className="w-4 sm:w-5 h-4 sm:h-5" />
-                    Redeem Points
-                  </button>
-                </div>
-              </div>
-            )}
-
-            {/* Statistics Tab */}
-            {activeTab === "stats" && (
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
-                <div className="bg-gradient-to-br from-blue-50 to-blue-100 rounded-lg p-4 sm:p-6 border border-blue-200">
-                  <p className="text-sm font-medium text-blue-900 mb-2">Points Earned This Month</p>
-                  <p className="text-3xl sm:text-4xl font-bold text-blue-700">+450</p>
-                  <p className="text-xs sm:text-sm text-blue-600 mt-2">From 3 purchases</p>
-                </div>
-                <div className="bg-gradient-to-br from-green-50 to-green-100 rounded-lg p-4 sm:p-6 border border-green-200">
-                  <p className="text-sm font-medium text-green-900 mb-2">Next Tier Requirement</p>
-                  <p className="text-3xl sm:text-4xl font-bold text-green-700">+2,750</p>
-                  <p className="text-xs sm:text-sm text-green-600 mt-2">Points needed for Platinum</p>
-                </div>
-              </div>
-            )}
-
-            {/* Tier Benefits Tab */}
-            {activeTab === "tiers" && (
-              <div className="space-y-3 sm:space-y-4">
-                {["Bronze", "Silver", "Gold", "Platinum"].map((tier) => {
-                  const isCurrentTier = tier === selectedCustomer.currentTier;
-                  const benefits: Record<string, string[]> = {
-                    Bronze: ["5% discount on all purchases", "Birthday bonus"],
-                    Silver: ["10% discount on all purchases", "Free shipping on orders", "Priority customer support"],
-                    Gold: ["15% discount on all purchases", "Free shipping", "VIP member perks", "Early access to sales"],
-                    Platinum: ["20% discount on all purchases", "Free shipping lifetime", "Concierge service", "Exclusive events"],
-                  };
-
-                  return (
-                    <div
-                      key={tier}
-                      className={`border rounded-lg p-4 sm:p-6 transition-colors ${
-                        isCurrentTier
-                          ? "border-blue-500 bg-blue-50"
-                          : "border-gray-200 bg-gray-50"
+                {/* Tab Navigation - iOS Style */}
+                <div className="bg-white/80 backdrop-blur-sm rounded-3xl p-1 shadow-sm border border-white/60 flex flex-wrap gap-1">
+                  {[
+                    { id: "overview", label: "Overview", icon: "👤" },
+                    { id: "members", label: "Members", icon: "👥" },
+                    { id: "tiers", label: "Tiers", icon: "👑" },
+                    { id: "referral", label: "Referral", icon: "🔗" },
+                    { id: "transactions", label: "History", icon: "📊" },
+                  ].map((tab) => (
+                    <button
+                      key={tab.id}
+                      onClick={() => setActiveTab(tab.id as any)}
+                      className={`flex-1 sm:flex-none px-4 py-3 rounded-2xl transition-all duration-300 font-medium text-xs sm:text-sm ${
+                        activeTab === tab.id
+                          ? "bg-gradient-to-r from-purple-600 to-blue-600 text-white shadow-md"
+                          : "text-gray-700 hover:text-gray-900"
                       }`}
                     >
-                      <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 mb-3">
-                        <div>
-                          <span className={`inline-block px-3 py-1 rounded-full text-xs sm:text-sm font-medium ${getTierBadge(tier)} border`}>
-                            {tier}
-                          </span>
-                          <p className="text-xs sm:text-sm text-gray-600 mt-2">Min 1000 points</p>
-                        </div>
-                        <div className="text-right">
-                          <p className="text-lg sm:text-xl font-bold text-gray-900">10%+ Discount</p>
-                          <p className="text-xs sm:text-sm text-gray-600">2x Points</p>
-                        </div>
-                      </div>
-                      <div className="mt-3 pt-3 border-t border-gray-200">
-                        <p className="text-xs sm:text-sm font-medium text-gray-900 mb-2">Benefits:</p>
-                        <ul className="space-y-1">
-                          {benefits[tier]?.map((benefit, idx) => (
-                            <li key={idx} className="flex items-center gap-2 text-xs sm:text-sm text-gray-700">
-                              <CheckCircle2 className="w-4 h-4 text-green-600 flex-shrink-0" />
-                              {benefit}
-                            </li>
-                          ))}
-                        </ul>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            )}
-
-            {/* Referral Tab */}
-            {activeTab === "referral" && (
-              <div className="space-y-4 sm:space-y-6">
-                <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 sm:p-6">
-                  <div className="flex flex-col sm:flex-row sm:items-start gap-3">
-                    <Users className="w-5 h-5 text-blue-600 mt-0.5 flex-shrink-0 hidden sm:block" />
-                    <div className="flex-1">
-                      <p className="font-medium text-blue-900">Your Referral Code</p>
-                      <p className="text-xs sm:text-sm text-blue-700 mt-1">
-                        Share this code with friends to earn 100 bonus points per successful referral
-                      </p>
-                      <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 mt-3">
-                        <code className="text-sm font-mono font-bold bg-white px-3 py-2 rounded border border-blue-300 flex-1">
-                          {selectedCustomer.referralCode}
-                        </code>
-                        <button
-                          onClick={() => copyToClipboard(selectedCustomer.referralCode)}
-                          className="w-full sm:w-auto bg-blue-600 hover:bg-blue-700 text-white p-2 rounded transition-colors flex items-center justify-center gap-2"
-                        >
-                          <Copy className="w-4 h-4" />
-                          <span className="text-sm">Copy</span>
-                        </button>
-                      </div>
-                    </div>
-                  </div>
+                      <span className="mr-1">{tab.icon}</span>
+                      <span className="hidden sm:inline">{tab.label}</span>
+                    </button>
+                  ))}
                 </div>
 
-                <button
-                  onClick={() => setShowReferralModal(true)}
-                  className="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-3 px-4 rounded-lg transition-colors flex items-center justify-center gap-2"
-                >
-                  <Share2 className="w-5 h-5" />
-                  Create New Referral
-                </button>
+                {/* Tab Content */}
+                <div className="space-y-6">
+                  {activeTab === "overview" && (
+                    <>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
+                        <div className="bg-gradient-to-br from-blue-50 to-blue-100/50 rounded-2xl p-4 sm:p-6 border border-blue-200">
+                          <div className="flex items-center justify-between mb-3">
+                            <p className="font-semibold text-blue-900">This Month</p>
+                            <Flame className="w-5 h-5 text-red-500" />
+                          </div>
+                          <p className="text-3xl font-bold text-blue-700">+450 pts</p>
+                          <p className="text-sm text-blue-600 mt-2">From 3 purchases</p>
+                        </div>
+                        <div className="bg-gradient-to-br from-green-50 to-green-100/50 rounded-2xl p-4 sm:p-6 border border-green-200">
+                          <div className="flex items-center justify-between mb-3">
+                            <p className="font-semibold text-green-900">Next Milestone</p>
+                            <Target className="w-5 h-5 text-green-600" />
+                          </div>
+                          <p className="text-3xl font-bold text-green-700">+2,750 pts</p>
+                          <p className="text-sm text-green-600 mt-2">To reach Platinum</p>
+                        </div>
+                      </div>
+
+                      <div className="bg-white/80 backdrop-blur-sm rounded-3xl p-6 sm:p-8 shadow-sm border border-white/60">
+                        <h3 className="text-lg font-bold text-gray-900 mb-4">Quick Actions</h3>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                          <button
+                            onClick={() => setShowRedeemModal(true)}
+                            className="flex items-center justify-center gap-2 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white font-semibold py-3 px-4 rounded-2xl transition-all duration-300"
+                          >
+                            <Gift className="w-5 h-5" />
+                            Redeem Points
+                          </button>
+                          <button
+                            onClick={() => setShowReferralModal(true)}
+                            className="flex items-center justify-center gap-2 bg-gradient-to-r from-purple-600 to-purple-700 hover:from-purple-700 hover:to-purple-800 text-white font-semibold py-3 px-4 rounded-2xl transition-all duration-300"
+                          >
+                            <Share2 className="w-5 h-5" />
+                            Create Referral
+                          </button>
+                        </div>
+                      </div>
+                    </>
+                  )}
+
+                  {activeTab === "members" && (
+                    <div className="bg-white/80 backdrop-blur-sm rounded-3xl p-6 sm:p-8 shadow-sm border border-white/60">
+                      <h3 className="text-lg font-bold text-gray-900 mb-4">Top Customers</h3>
+                      <div className="space-y-3">
+                        {customers.slice(0, 10).map((customer, idx) => (
+                          <div key={customer._id} className="flex items-center justify-between p-3 sm:p-4 bg-gradient-to-r from-slate-50 to-slate-100/50 rounded-2xl border border-slate-200/50 hover:border-slate-300/80 transition-all">
+                            <div className="flex items-center gap-3">
+                              <span className="w-8 h-8 rounded-full bg-gradient-to-br from-purple-600 to-blue-600 text-white flex items-center justify-center font-bold text-sm">{idx + 1}</span>
+                              <div className="flex-1">
+                                <p className="font-semibold text-gray-900 text-sm">{customer.customerName}</p>
+                                <p className="text-xs text-gray-600">{customer.currentTier}</p>
+                              </div>
+                            </div>
+                            <p className="font-bold text-gray-900">{customer.totalPoints.toLocaleString()} pts</p>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {activeTab === "tiers" && (
+                    <div className="space-y-3">
+                      {Object.entries(TIER_CONFIG).map(([tier, config]: any) => {
+                        const isCurrentTier = tier === selectedCustomer.currentTier;
+                        return (
+                          <div key={tier} className={`rounded-2xl p-4 sm:p-6 border-2 transition-all ${isCurrentTier ? "border-purple-500 bg-purple-50" : "border-gray-200 bg-white/50"}`}>
+                            <div className="flex items-center justify-between mb-3">
+                              <div className="flex items-center gap-3">
+                                <span className="text-4xl">{config.icon}</span>
+                                <div>
+                                  <p className="font-bold text-gray-900">{tier} Member</p>
+                                  <p className="text-xs text-gray-600">{config.min.toLocaleString()} - {config.max === Infinity ? "∞" : config.max.toLocaleString()} points</p>
+                                </div>
+                              </div>
+                              {isCurrentTier && <span className="px-3 py-1 bg-purple-600 text-white text-xs font-bold rounded-full">CURRENT</span>}
+                            </div>
+                            <div className="pt-3 border-t border-gray-200 grid grid-cols-1 sm:grid-cols-3 gap-3">
+                              <div>
+                                <p className="text-xs text-gray-600 font-semibold mb-1">Discount</p>
+                                <p className="font-bold text-gray-900">{5 + (Object.keys(TIER_CONFIG).indexOf(tier) * 5)}%</p>
+                              </div>
+                              <div>
+                                <p className="text-xs text-gray-600 font-semibold mb-1">Points Multiplier</p>
+                                <p className="font-bold text-gray-900">{1 + Object.keys(TIER_CONFIG).indexOf(tier) * 0.5}x</p>
+                              </div>
+                              <div>
+                                <p className="text-xs text-gray-600 font-semibold mb-1">Benefits</p>
+                                <p className="font-bold text-gray-900">{3 + Object.keys(TIER_CONFIG).indexOf(tier)}</p>
+                              </div>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+
+                  {activeTab === "referral" && (
+                    <div className="space-y-4">
+                      <div className="bg-gradient-to-br from-purple-50 to-blue-50 rounded-3xl p-6 sm:p-8 border border-purple-200">
+                        <div className="flex items-start gap-4">
+                          <div className="text-3xl">🔗</div>
+                          <div className="flex-1">
+                            <p className="font-bold text-gray-900 mb-1">Your Referral Code</p>
+                            <p className="text-sm text-gray-700 mb-4">Share this code to earn 100 bonus points per referral</p>
+                            <div className="flex items-center gap-2">
+                              <code className="flex-1 px-3 py-2 bg-white rounded-lg border border-purple-200 font-mono font-bold text-purple-700 text-sm">{selectedCustomer.referralCode}</code>
+                              <button onClick={() => copyToClipboard(selectedCustomer.referralCode)} className="p-2 bg-white rounded-lg hover:bg-gray-50 transition-colors">
+                                <Copy className="w-5 h-5 text-purple-600" />
+                              </button>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+
+                      <button
+                        onClick={() => setShowReferralModal(true)}
+                        className="w-full bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white font-bold py-3 px-4 rounded-2xl transition-all flex items-center justify-center gap-2"
+                      >
+                        <Share2 className="w-5 h-5" />
+                        Create New Referral
+                      </button>
+
+                      <div className="bg-white/80 backdrop-blur-sm rounded-3xl p-6 shadow-sm border border-white/60">
+                        <p className="text-sm font-semibold text-gray-900 mb-3">Referred Customers: {(selectedCustomer.referredCustomers?.length || 0)}</p>
+                        <div className="space-y-2">
+                          {(selectedCustomer.referredCustomers || []).length > 0 ? (
+                            (selectedCustomer.referredCustomers || []).map((refId, idx) => (
+                              <div key={idx} className="text-xs text-gray-600 p-2 bg-gray-50 rounded-lg">#Referral {idx + 1}</div>
+                            ))
+                          ) : (
+                            <p className="text-xs text-gray-500">No referrals yet</p>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {activeTab === "transactions" && (
+                    <div className="bg-white/80 backdrop-blur-sm rounded-3xl p-6 sm:p-8 shadow-sm border border-white/60">
+                      <h3 className="text-lg font-bold text-gray-900 mb-4">Points History</h3>
+                      <div className="space-y-3">
+                        <div className="flex items-center justify-between p-3 sm:p-4 bg-green-50 rounded-2xl border border-green-200">
+                          <div>
+                            <p className="font-semibold text-green-900 text-sm">Purchase Reward</p>
+                            <p className="text-xs text-green-700">From order #1234</p>
+                          </div>
+                          <p className="font-bold text-green-700">+450</p>
+                        </div>
+                        <div className="flex items-center justify-between p-3 sm:p-4 bg-blue-50 rounded-2xl border border-blue-200">
+                          <div>
+                            <p className="font-semibold text-blue-900 text-sm">Referral Bonus</p>
+                            <p className="text-xs text-blue-700">From Ahmed's purchase</p>
+                          </div>
+                          <p className="font-bold text-blue-700">+100</p>
+                        </div>
+                        <div className="flex items-center justify-between p-3 sm:p-4 bg-red-50 rounded-2xl border border-red-200">
+                          <div>
+                            <p className="font-semibold text-red-900 text-sm">Points Redeemed</p>
+                            <p className="text-xs text-red-700">For discount coupon</p>
+                          </div>
+                          <p className="font-bold text-red-700">-250</p>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </div>
               </div>
             )}
-          </div>
-        </div>
-      )}
+          </>
+        )}
 
-      {/* Referral Modal */}
-      {showReferralModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-lg shadow-xl max-w-md w-full p-6">
-            <h2 className="text-lg sm:text-xl font-bold text-gray-900 mb-4">Create Referral</h2>
-            <div className="space-y-4 mb-6">
-              <div>
-                <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1">
-                  Referred Person Name *
-                </label>
-                <input
-                  type="text"
-                  value={referralData.referredName}
-                  onChange={(e) =>
-                    setReferralData({
-                      ...referralData,
-                      referredName: e.target.value,
-                    })
-                  }
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
-                  placeholder="John Doe"
-                />
+        {/* Redeem Modal */}
+        {showRedeemModal && selectedCustomer && (
+          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+            <div className="bg-white rounded-3xl shadow-xl max-w-md w-full p-6">
+              <h2 className="text-2xl font-bold text-gray-900 mb-4">Redeem Points</h2>
+              <div className="space-y-4 mb-6">
+                <div>
+                  <label className="block text-sm font-semibold text-gray-900 mb-2">Available Points: {selectedCustomer.availablePoints.toLocaleString()}</label>
+                  <input type="number" max={selectedCustomer.availablePoints} value={redeemData.pointsToRedeem} onChange={(e) => setRedeemData({ ...redeemData, pointsToRedeem: parseInt(e.target.value) })} className="w-full px-4 py-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-purple-600 outline-none" placeholder="Points to redeem" />
+                </div>
+                <div>
+                  <label className="block text-sm font-semibold text-gray-900 mb-2">Reason</label>
+                  <select value={redeemData.reason} onChange={(e) => setRedeemData({ ...redeemData, reason: e.target.value })} className="w-full px-4 py-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-purple-600 outline-none">
+                    <option value="discount">Discount</option>
+                    <option value="free_product">Free Product</option>
+                    <option value="refund">Refund</option>
+                  </select>
+                </div>
               </div>
-              <div>
-                <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1">
-                  Phone Number
-                </label>
-                <input
-                  type="tel"
-                  value={referralData.referredPhone}
-                  onChange={(e) =>
-                    setReferralData({
-                      ...referralData,
-                      referredPhone: e.target.value,
-                    })
-                  }
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
-                  placeholder="+971 50 123 4567"
-                />
+              <div className="flex gap-3">
+                <button onClick={() => setShowRedeemModal(false)} disabled={isRedeeming} className="flex-1 px-4 py-3 border border-gray-300 text-gray-700 font-semibold rounded-xl hover:bg-gray-50 disabled:opacity-50">
+                  Cancel
+                </button>
+                <button onClick={handleRedeemPoints} disabled={isRedeeming} className="flex-1 px-4 py-3 bg-purple-600 hover:bg-purple-700 disabled:bg-purple-400 text-white font-semibold rounded-xl transition-all flex items-center justify-center gap-2">
+                  {isRedeeming ? <Loader className="w-4 h-4 animate-spin" /> : "Redeem"}
+                </button>
               </div>
-              <div>
-                <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1">
-                  Bonus Points
-                </label>
-                <input
-                  type="number"
-                  value={referralData.bonusPoints}
-                  onChange={(e) =>
-                    setReferralData({
-                      ...referralData,
-                      bonusPoints: parseInt(e.target.value),
-                    })
-                  }
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
-                />
-              </div>
-            </div>
-            <div className="flex gap-3">
-              <button
-                onClick={() => setShowReferralModal(false)}
-                disabled={isCreatingReferral}
-                className="flex-1 px-4 py-2 border border-gray-300 text-gray-700 font-medium rounded-lg hover:bg-gray-50 disabled:opacity-50 transition-colors text-sm"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={handleCreateReferral}
-                disabled={isCreatingReferral}
-                className="flex-1 px-4 py-2 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white font-medium rounded-lg transition-colors text-sm flex items-center justify-center gap-2"
-              >
-                {isCreatingReferral ? (
-                  <>
-                    <Loader className="w-4 h-4 animate-spin" />
-                    Creating...
-                  </>
-                ) : (
-                  "Create"
-                )}
-              </button>
             </div>
           </div>
-        </div>
-      )}
+        )}
+
+        {/* Referral Modal */}
+        {showReferralModal && (
+          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+            <div className="bg-white rounded-3xl shadow-xl max-w-md w-full p-6">
+              <h2 className="text-2xl font-bold text-gray-900 mb-4">Create Referral</h2>
+              <div className="space-y-4 mb-6">
+                <div>
+                  <label className="block text-sm font-semibold text-gray-900 mb-2">Referred Name *</label>
+                  <input type="text" value={referralData.referredName} onChange={(e) => setReferralData({ ...referralData, referredName: e.target.value })} className="w-full px-4 py-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-purple-600 outline-none" placeholder="John Doe" />
+                </div>
+                <div>
+                  <label className="block text-sm font-semibold text-gray-900 mb-2">Phone</label>
+                  <input type="tel" value={referralData.referredPhone} onChange={(e) => setReferralData({ ...referralData, referredPhone: e.target.value })} className="w-full px-4 py-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-purple-600 outline-none" placeholder="+971 50 123 4567" />
+                </div>
+                <div>
+                  <label className="block text-sm font-semibold text-gray-900 mb-2">Bonus Points</label>
+                  <input type="number" value={referralData.bonusPoints} onChange={(e) => setReferralData({ ...referralData, bonusPoints: parseInt(e.target.value) })} className="w-full px-4 py-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-purple-600 outline-none" />
+                </div>
+              </div>
+              <div className="flex gap-3">
+                <button onClick={() => setShowReferralModal(false)} disabled={isCreatingReferral} className="flex-1 px-4 py-3 border border-gray-300 text-gray-700 font-semibold rounded-xl hover:bg-gray-50 disabled:opacity-50">
+                  Cancel
+                </button>
+                <button onClick={handleCreateReferral} disabled={isCreatingReferral} className="flex-1 px-4 py-3 bg-purple-600 hover:bg-purple-700 disabled:bg-purple-400 text-white font-semibold rounded-xl transition-all flex items-center justify-center gap-2">
+                  {isCreatingReferral ? <Loader className="w-4 h-4 animate-spin" /> : "Create"}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
     </div>
   );
 }
