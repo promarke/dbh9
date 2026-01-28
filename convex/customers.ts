@@ -85,7 +85,7 @@ export const create = mutation({
       }
     }
     
-    return await ctx.db.insert("customers", {
+    const customerId = await ctx.db.insert("customers", {
       name: args.name.trim(),
       email: args.email?.trim(),
       phone: args.phone?.trim(),
@@ -99,6 +99,25 @@ export const create = mutation({
       loyaltyPoints: args.loyaltyPoints ?? 0,
       isActive: true,
     });
+
+    // Create initial loyalty record for the new customer
+    await ctx.db.insert("customerLoyalty", {
+      customerId,
+      customerName: args.name.trim(),
+      email: args.email?.trim(),
+      phone: args.phone?.trim(),
+      currentTier: "Bronze",
+      totalPoints: args.loyaltyPoints ?? 0,
+      availablePoints: args.loyaltyPoints ?? 0,
+      redeemedPoints: 0,
+      totalSpent: 0,
+      totalOrders: 0,
+      referralCode: `${args.name.trim().replace(/\s+/g, '').toUpperCase()}-${customerId.substring(0, 6).toUpperCase()}`,
+      membershipDate: Date.now(),
+      createdAt: Date.now(),
+    });
+
+    return customerId;
   },
 });
 

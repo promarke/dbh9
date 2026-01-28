@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Award, Users, Zap, TrendingUp, Crown, Gift, Share2, CheckCircle2, Copy, AlertCircle, UserCheck, Loader, Flame, Target, Sparkles, Heart } from "lucide-react";
+import { Award, Users, Zap, TrendingUp, Crown, Gift, Share2, CheckCircle2, Copy, AlertCircle, UserCheck, Loader, Flame, Target, Sparkles, Heart, UserPlus } from "lucide-react";
 import { toast } from "sonner";
 import { useQuery, useMutation } from "convex/react";
 import { api } from "../../convex/_generated/api";
@@ -38,53 +38,7 @@ const TIER_CONFIG = {
   Platinum: { min: 10000, max: Infinity, color: "from-blue-500 to-purple-600", lightColor: "from-blue-50 to-purple-100", icon: "💎" },
 };
 
-const FALLBACK_CUSTOMERS: LoyaltyCustomer[] = [
-  {
-    _id: "fallback1",
-    customerId: "cust1" as any,
-    customerName: "Ahmed Hassan",
-    email: "ahmed@example.com",
-    phone: "+971501234567",
-    currentTier: "Gold",
-    totalPoints: 5250,
-    availablePoints: 3500,
-    redeemedPoints: 1750,
-    totalSpent: 12500,
-    totalOrders: 45,
-    referralCode: "AHMED2025",
-    membershipDate: new Date("2023-06-15").getTime(),
-  },
-  {
-    _id: "fallback2",
-    customerId: "cust2" as any,
-    customerName: "Fatima Al-Mansouri",
-    email: "fatima@example.com",
-    phone: "+971509876543",
-    currentTier: "Platinum",
-    totalPoints: 8750,
-    availablePoints: 6200,
-    redeemedPoints: 2550,
-    totalSpent: 28900,
-    totalOrders: 89,
-    referralCode: "FATIMA2025",
-    membershipDate: new Date("2022-01-10").getTime(),
-  },
-  {
-    _id: "fallback3",
-    customerId: "cust3" as any,
-    customerName: "Mohammed Ali",
-    email: "mohammed@example.com",
-    phone: "+971555555555",
-    currentTier: "Silver",
-    totalPoints: 2100,
-    availablePoints: 1800,
-    redeemedPoints: 300,
-    totalSpent: 4200,
-    totalOrders: 18,
-    referralCode: "MOHAMM2025",
-    membershipDate: new Date("2023-11-20").getTime(),
-  },
-];
+const FALLBACK_CUSTOMERS: LoyaltyCustomer[] = [];
 
 const FALLBACK_STATS: LoyaltyStats = {
   totalMembers: 156,
@@ -115,8 +69,14 @@ export default function CustomerLoyalty() {
   const createReferralMutation = useMutation(api.loyalty?.createReferral);
   const redeemPointsMutation = useMutation(api.loyalty?.redeemPoints);
 
-  const customers = (allCustomers && allCustomers.length > 0 ? allCustomers : FALLBACK_CUSTOMERS) as LoyaltyCustomer[];
-  const stats = loyaltyStats || FALLBACK_STATS;
+  const customers = (allCustomers && allCustomers.length > 0 ? allCustomers : []) as LoyaltyCustomer[];
+  const stats = loyaltyStats || {
+    totalMembers: 0,
+    totalPointsIssued: 0,
+    totalPointsRedeemed: 0,
+    averageSpent: 0,
+    topSpender: null,
+  };
   const selectedCustomer = customers.find((c) => c._id === selectedCustomerId) || customers[0];
   const isLoading = !allCustomers || !loyaltyStats;
 
@@ -274,7 +234,49 @@ export default function CustomerLoyalty() {
         </div>
 
         {/* Customer Selection & Tabs */}
-        {customers.length > 0 && (
+        {customers.length === 0 ? (
+          <div className="bg-gradient-to-br from-purple-50 to-blue-50 rounded-3xl p-12 sm:p-16 text-center border border-purple-200/30">
+            <div className="max-w-md mx-auto">
+              <Award className="w-16 h-16 text-purple-400 mx-auto mb-4 opacity-50" />
+              <h3 className="text-2xl font-bold text-gray-900 mb-2">No Customers Yet</h3>
+              <p className="text-gray-600 mb-6">
+                Start by adding your first customer in the Customers section to begin managing their loyalty rewards and referral program.
+              </p>
+              <button
+                onClick={() => {
+                  // This would navigate to Customers page
+                  const customersTab = document.querySelector('[data-tab="Customers"]');
+                  if (customersTab) {
+                    (customersTab as HTMLElement).click();
+                  }
+                }}
+                className="inline-flex items-center gap-2 px-6 py-3 bg-purple-600 text-white rounded-2xl hover:bg-purple-700 transition-colors font-medium"
+              >
+        {/* Customer Selection & Tabs */}
+        {customers.length === 0 ? (
+          <div className="bg-gradient-to-br from-purple-50 to-blue-50 rounded-3xl p-12 sm:p-16 text-center border border-purple-200/30">
+            <div className="max-w-md mx-auto">
+              <Award className="w-16 h-16 text-purple-400 mx-auto mb-4 opacity-50" />
+              <h3 className="text-2xl font-bold text-gray-900 mb-2">No Customers Yet</h3>
+              <p className="text-gray-600 mb-6">
+                Start by adding your first customer in the Customers section to begin managing their loyalty rewards and referral program.
+              </p>
+              <button
+                onClick={() => {
+                  // This would navigate to Customers page
+                  const customersTab = document.querySelector('[data-tab="Customers"]');
+                  if (customersTab) {
+                    (customersTab as HTMLElement).click();
+                  }
+                }}
+                className="inline-flex items-center gap-2 px-6 py-3 bg-purple-600 text-white rounded-2xl hover:bg-purple-700 transition-colors font-medium"
+              >
+                <UserPlus className="w-5 h-5" />
+                Add First Customer
+              </button>
+            </div>
+          </div>
+        ) : (
           <>
             {/* Customer Selector */}
             <div className="bg-white/80 backdrop-blur-sm rounded-3xl p-6 sm:p-8 shadow-sm border border-white/60">
@@ -574,6 +576,8 @@ export default function CustomerLoyalty() {
               </div>
             </div>
           </div>
+        )}
+        </>
         )}
 
         {/* Referral Modal */}
