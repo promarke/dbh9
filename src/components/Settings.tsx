@@ -5,6 +5,8 @@ import { toast } from "sonner";
 import { PrintTest } from "./PrintTest";
 import { BranchManagement } from "./BranchManagement";
 import { RuleBasedUserManagement } from "./RuleBasedUserManagement";
+import CustomerLoyalty from "./CustomerLoyalty";
+import CouponManagement from "./CouponManagement";
 
 export function Settings() {
   const [activeTab, setActiveTab] = useState("general");
@@ -32,6 +34,8 @@ export function Settings() {
     { id: "logo", name: "Logo & Title", icon: "🎨" },
     { id: "branches", name: "Branches", icon: "🏢" },
     { id: "store", name: "Store Info", icon: "🏪" },
+    { id: "loyalty", name: "Loyalty & Rewards", icon: "🎁" },
+    { id: "coupons", name: "Coupons", icon: "🎟️" },
     { id: "print", name: "Print Test", icon: "🖨️" },
     { id: "backup", name: "Backup & Restore", icon: "💾" },
     { id: "users", name: "User Management", icon: "👥" },
@@ -764,6 +768,18 @@ export function Settings() {
           <div className="bg-white rounded-lg shadow p-4 sm:p-6 border border-gray-200">
             <RuleBasedUserManagement />
           </div>
+        </div>
+      )}
+
+      {activeTab === "loyalty" && (
+        <div>
+          <CustomerLoyalty />
+        </div>
+      )}
+
+      {activeTab === "coupons" && (
+        <div>
+          <CouponManagement />
         </div>
       )}
 

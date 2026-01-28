@@ -575,6 +575,139 @@ const applicationTables = {
     createdAt: v.number(),
   })
     .index("by_category", ["category"]),
+
+  // Loyalty Program & Tiers
+  loyaltyPrograms: defineTable({
+    name: v.string(),
+    description: v.optional(v.string()),
+    pointsPerDollar: v.number(), // e.g., 1 point per $1 spent
+    isActive: v.boolean(),
+    tiers: v.array(v.object({
+      name: v.string(), // "Bronze", "Silver", "Gold", "Platinum"
+      minPoints: v.number(),
+      discountPercentage: v.number(),
+      bonusPointsMultiplier: v.number(), // e.g., 1.5x for higher tiers
+      benefits: v.optional(v.array(v.string())), // Special benefits like free shipping, birthday bonus
+    })),
+    createdAt: v.number(),
+  })
+    .index("by_active", ["isActive"]),
+
+  // Customer Loyalty Account
+  customerLoyalty: defineTable({
+    customerId: v.id("customers"),
+    customerName: v.string(),
+    email: v.optional(v.string()),
+    phone: v.optional(v.string()),
+    totalPoints: v.number(),
+    availablePoints: v.number(),
+    redeemedPoints: v.number(),
+    currentTier: v.string(), // "Bronze", "Silver", "Gold", "Platinum"
+    tierUpgradeDate: v.optional(v.number()),
+    membershipDate: v.number(),
+    lastActivityDate: v.number(),
+    totalSpent: v.number(),
+    totalOrders: v.number(),
+    birthDate: v.optional(v.number()),
+    referralCode: v.string(),
+    referredCustomers: v.array(v.string()), // Array of referred customer IDs
+    isActive: v.boolean(),
+  })
+    .index("by_customer", ["customerId"])
+    .index("by_tier", ["currentTier"])
+    .index("by_referral", ["referralCode"]),
+
+  // Loyalty Points Transactions
+  pointsTransactions: defineTable({
+    customerId: v.id("customers"),
+    customerName: v.string(),
+    transactionType: v.string(), // "purchase", "redemption", "bonus", "refund", "referral", "adjustment"
+    points: v.number(),
+    description: v.string(),
+    referenceId: v.optional(v.id("sales")), // Link to sale if applicable
+    branchId: v.optional(v.id("branches")),
+    branchName: v.optional(v.string()),
+    createdAt: v.number(),
+    createdBy: v.optional(v.id("users")),
+    notes: v.optional(v.string()),
+  })
+    .index("by_customer", ["customerId"])
+    .index("by_type", ["transactionType"])
+    .index("by_date", ["createdAt"]),
+
+  // Enhanced Coupons with more features
+  advancedCoupons: defineTable({
+    code: v.string(),
+    description: v.optional(v.string()),
+    discountType: v.string(), // "percentage", "fixed", "points", "free_shipping"
+    discountValue: v.number(),
+    minOrderAmount: v.optional(v.number()),
+    maxDiscountAmount: v.optional(v.number()),
+    usagePerCustomer: v.optional(v.number()), // Max uses per customer (default 1)
+    maxUsageCount: v.optional(v.number()), // Total max uses globally
+    usageCount: v.number(),
+    validFrom: v.number(),
+    validUntil: v.number(),
+    isActive: v.boolean(),
+    applicableProducts: v.optional(v.array(v.id("products"))),
+    applicableCategories: v.optional(v.array(v.id("categories"))),
+    applicableBranches: v.optional(v.array(v.id("branches"))),
+    loyaltyTiersRequired: v.optional(v.array(v.string())), // e.g., ["Gold", "Platinum"]
+    requiresLoyaltyPoints: v.optional(v.number()), // Minimum points to use
+    createdBy: v.id("users"),
+    createdByName: v.string(),
+    createdAt: v.number(),
+    usedBy: v.array(v.object({
+      customerId: v.id("customers"),
+      customerName: v.string(),
+      usageCount: v.number(),
+      lastUsedAt: v.number(),
+    })),
+  })
+    .index("by_code", ["code"])
+    .index("by_active", ["isActive"])
+    .index("by_validity", ["validFrom", "validUntil"]),
+
+  // Coupon Redemption History
+  couponRedemptions: defineTable({
+    couponId: v.id("advancedCoupons"),
+    couponCode: v.string(),
+    customerId: v.id("customers"),
+    customerName: v.string(),
+    saleId: v.optional(v.id("sales")),
+    discountAmount: v.number(),
+    pointsEarned: v.optional(v.number()),
+    pointsRedeemed: v.optional(v.number()),
+    branchId: v.id("branches"),
+    branchName: v.string(),
+    redeemedAt: v.number(),
+    employeeId: v.optional(v.id("employees")),
+    employeeName: v.optional(v.string()),
+  })
+    .index("by_coupon", ["couponId"])
+    .index("by_customer", ["customerId"])
+    .index("by_sale", ["saleId"])
+    .index("by_date", ["redeemedAt"]),
+
+  // Referral Program
+  referralProgram: defineTable({
+    referrerId: v.id("customers"),
+    referrerName: v.string(),
+    referrerPhone: v.optional(v.string()),
+    referredCustomerId: v.optional(v.id("customers")),
+    referredName: v.optional(v.string()),
+    referredPhone: v.optional(v.string()),
+    referralCode: v.string(),
+    status: v.string(), // "pending", "completed", "cancelled"
+    bonusPointsOffered: v.number(),
+    bonusPointsAwarded: v.number(),
+    referredAt: v.number(),
+    completedAt: v.optional(v.number()),
+    firstPurchaseAmount: v.optional(v.number()),
+  })
+    .index("by_referrer", ["referrerId"])
+    .index("by_code", ["referralCode"])
+    .index("by_status", ["status"]),
 };
 
 

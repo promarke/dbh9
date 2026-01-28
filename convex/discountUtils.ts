@@ -25,8 +25,9 @@ export const getApplicableDiscounts = query({
 
     // Filter by branch
     if (args.branchId) {
+      const branchId = args.branchId;
       discounts = discounts.filter(d =>
-        !d.branchIds || d.branchIds.length === 0 || d.branchIds.includes(args.branchId!)
+        !d.branchIds || d.branchIds.length === 0 || d.branchIds.includes(branchId)
       );
     }
 
@@ -230,8 +231,9 @@ export const getDiscountStats = query({
     let discounts = await ctx.db.query("discounts").collect();
 
     if (args.branchId) {
+      const branchId = args.branchId;
       discounts = discounts.filter(d =>
-        !d.branchIds || d.branchIds.length === 0 || d.branchIds.includes(args.branchId!)
+        !d.branchIds || d.branchIds.length === 0 || d.branchIds.includes(branchId)
       );
     }
 
@@ -270,8 +272,9 @@ export const getDiscountsByStatus = query({
     let discounts = await ctx.db.query("discounts").collect();
 
     if (args.branchId) {
+      const branchId = args.branchId;
       discounts = discounts.filter(d =>
-        !d.branchIds || d.branchIds.length === 0 || d.branchIds.includes(args.branchId!)
+        !d.branchIds || d.branchIds.length === 0 || d.branchIds.includes(branchId)
       );
     }
 
@@ -381,8 +384,9 @@ export const getBestDiscount = query({
 
     // Filter by branch
     if (args.branchId) {
+      const branchId = args.branchId;
       discounts = discounts.filter(d =>
-        !d.branchIds || d.branchIds.length === 0 || d.branchIds.includes(args.branchId)
+        !d.branchIds || d.branchIds.length === 0 || d.branchIds.includes(branchId)
       );
     }
 
