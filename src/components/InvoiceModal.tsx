@@ -116,14 +116,8 @@ export function InvoiceModal({ sale, onClose }: InvoiceModalProps) {
   // Generate QR Code
   useEffect(() => {
     if (printSettings.includeQR) {
-      const qrData = JSON.stringify({
-        receiptId: sale.saleNumber,
-        shop: shopSettings.name,
-        total: sale.total,
-        date: new Date(sale._creationTime).toISOString(),
-        customer: sale.customerName || 'Walk-in Customer',
-        url: `${shopSettings.website}/receipt/${sale.saleNumber}`
-      });
+      // QR code contains only Facebook link
+      const qrData = "https://www.facebook.com/AbayaStoreDubai";
 
       QRCode.toDataURL(qrData, {
         width: 150,
@@ -599,9 +593,10 @@ export function InvoiceModal({ sale, onClose }: InvoiceModalProps) {
               )}
 
               {printSettings.includeQR && qrCodeDataUrl && (
-                <div className="qr-code text-center mb-4">
-                  <img src={qrCodeDataUrl} alt="QR Code" style={{ width: '80px', height: '80px' }} />
-                  <div className="text-xs">Scan for digital receipt</div>
+                <div className="qr-code text-center my-6">
+                  <p className="text-xs font-bold mb-2">👉 Follow Us 👈</p>
+                  <img src={qrCodeDataUrl} alt="QR Code" style={{ width: '100px', height: '100px', margin: '0 auto' }} />
+                  <div className="text-xs mt-2 font-bold">Facebook</div>
                 </div>
               )}
 
