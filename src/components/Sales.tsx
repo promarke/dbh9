@@ -142,46 +142,6 @@ export function Sales() {
           </div>
         ))}
       </div>
-                sale.status === "completed"
-                  ? "bg-green-100 text-green-800"
-                  : sale.status === "pending"
-                  ? "bg-yellow-100 text-yellow-800"
-                  : "bg-red-100 text-red-800"
-              }`}>
-                {sale.status}
-              </span>
-            </div>
-            
-            <div className="grid grid-cols-2 gap-4 mb-3 text-sm">
-              <div>
-                <p className="text-gray-500">Items</p>
-                <p className="font-medium">{sale.items.length} items</p>
-              </div>
-              <div>
-                <p className="text-gray-500">Total</p>
-                <p className="font-semibold text-red-600">৳{sale.total.toLocaleString('en-BD')}</p>
-              </div>
-              <div>
-                <p className="text-gray-500">Payment</p>
-                <span className="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-gray-100 text-gray-800 capitalize">
-                  {sale.paymentMethod}
-                </span>
-              </div>
-              <div>
-                <p className="text-gray-500">Date</p>
-                <p className="font-medium">{new Date(sale._creationTime).toLocaleDateString('en-BD')}</p>
-              </div>
-            </div>
-            
-            <button
-              onClick={() => handleViewInvoice(sale)}
-              className="w-full px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors text-sm font-medium"
-            >
-              View Invoice
-            </button>
-          </div>
-        ))}
-      </div>
 
       {/* Desktop Table View */}
       <div className="hidden sm:block bg-white/80 backdrop-blur-sm rounded-3xl shadow-sm border border-white/60 overflow-hidden">
