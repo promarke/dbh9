@@ -129,14 +129,14 @@ export default function CustomerLoyalty() {
   const getTierConfig = (tier: string) => (TIER_CONFIG as any)[tier] || TIER_CONFIG.Bronze;
 
   const handleCreateReferral = async () => {
-    if (!referralData.referredName || !selectedCustomer?.customerId) {
+    if (!referralData.referredName || !selectedCustomer?._id) {
       toast.error("Please fill in required fields");
       return;
     }
     setIsCreatingReferral(true);
     try {
       await createReferralMutation({
-        referrerId: selectedCustomer.customerId as any,
+        referrerId: selectedCustomer._id,
         referrerName: selectedCustomer.customerName,
         referrerPhone: selectedCustomer.phone,
         referredName: referralData.referredName,
@@ -154,7 +154,7 @@ export default function CustomerLoyalty() {
   };
 
   const handleRedeemPoints = async () => {
-    if (redeemData.pointsToRedeem <= 0 || !selectedCustomer?.customerId) {
+    if (redeemData.pointsToRedeem <= 0 || !selectedCustomer?._id) {
       toast.error("Invalid points to redeem");
       return;
     }
@@ -165,7 +165,7 @@ export default function CustomerLoyalty() {
     setIsRedeeming(true);
     try {
       await redeemPointsMutation({
-        customerId: selectedCustomer.customerId as any,
+        customerId: selectedCustomer._id,
         pointsToRedeem: redeemData.pointsToRedeem,
         reason: redeemData.reason,
       });
