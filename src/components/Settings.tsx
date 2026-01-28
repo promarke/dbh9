@@ -330,11 +330,12 @@ export function Settings() {
   };
 
   return (
-    <div className="space-y-4 sm:space-y-6">
-      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center space-y-2 sm:space-y-0">
-        <h2 className="text-xl sm:text-2xl font-bold text-gray-900">⚙️ Settings</h2>
-        <div className="text-sm text-gray-500">
-          DUBAI BORKA HOUSE Configuration
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-50">
+      <div className="space-y-4 sm:space-y-6 p-4 sm:p-6 max-w-7xl mx-auto">
+      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
+        <div>
+          <h1 className="text-3xl sm:text-4xl font-bold text-gray-900">⚙️ Settings</h1>
+          <p className="text-sm text-gray-600 mt-1">DUBAI BORKA HOUSE Configuration</p>
         </div>
       </div>
 
@@ -345,7 +346,7 @@ export function Settings() {
             <button
               key={tab.id}
               onClick={() => setActiveTab(tab.id)}
-              className={`py-2 px-1 border-b-2 font-medium text-sm whitespace-nowrap ${
+              className={`py-3 px-1 border-b-2 font-semibold text-sm whitespace-nowrap transition-colors ${
                 activeTab === tab.id
                   ? "border-purple-500 text-purple-600"
                   : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
@@ -361,8 +362,8 @@ export function Settings() {
       {/* Tab Content */}
       {activeTab === "logo" && (
         <div className="space-y-4 sm:space-y-6">
-          <div className="bg-white rounded-lg shadow p-4 sm:p-6 border border-gray-200">
-            <h3 className="text-lg font-semibold text-gray-900 mb-6">🎨 লোগো এবং টাইটেল ম্যানেজমেন্ট</h3>
+          <div className="bg-white/80 backdrop-blur-sm rounded-3xl shadow-sm border border-white/60 p-6">
+            <h3 className="text-lg font-bold text-gray-900 mb-6">🎨 লোগো এবং টাইটেল ম্যানেজমেন্ট</h3>
             
             <div className="max-w-2xl mx-auto">
               {/* Logo & Title Display Section */}
@@ -934,6 +935,7 @@ export function Settings() {
           </div>
         </div>
       )}
+      </div>
     </div>
   );
 }

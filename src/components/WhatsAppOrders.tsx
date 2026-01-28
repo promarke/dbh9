@@ -111,37 +111,38 @@ export function WhatsAppOrders() {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-50">
+      <div className="space-y-6 p-4 sm:p-6 max-w-7xl mx-auto">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-        <h2 className="text-2xl font-bold text-gray-900">📱 WhatsApp Orders</h2>
-        <div className="text-sm text-gray-600">
-          Total: {orders?.length || 0} | Pending: {orders?.filter(o => o.status === "pending").length || 0}
+        <div>
+          <h1 className="text-3xl sm:text-4xl font-bold text-gray-900">📱 WhatsApp Orders</h1>
+          <p className="text-sm text-gray-600 mt-1">Manage WhatsApp customer orders • {orders?.length || 0} total</p>
         </div>
       </div>
 
       {/* Filter & Stats */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <div className="bg-white rounded-lg shadow p-4">
-          <div className="text-sm text-gray-600">Pending</div>
-          <div className="text-2xl font-bold text-yellow-600">{orders?.filter(o => o.status === "pending").length || 0}</div>
+        <div className="bg-gradient-to-br from-yellow-50 to-yellow-100/50 rounded-2xl p-5 border border-yellow-100/50">
+          <div className="text-xs font-semibold text-yellow-700 uppercase tracking-wide">Pending</div>
+          <div className="text-2xl font-bold text-yellow-700 mt-2">{orders?.filter(o => o.status === "pending").length || 0}</div>
         </div>
-        <div className="bg-white rounded-lg shadow p-4">
-          <div className="text-sm text-gray-600">Confirmed</div>
-          <div className="text-2xl font-bold text-blue-600">{orders?.filter(o => o.status === "confirmed").length || 0}</div>
+        <div className="bg-gradient-to-br from-blue-50 to-blue-100/50 rounded-2xl p-5 border border-blue-100/50">
+          <div className="text-xs font-semibold text-blue-700 uppercase tracking-wide">Confirmed</div>
+          <div className="text-2xl font-bold text-blue-700 mt-2">{orders?.filter(o => o.status === "confirmed").length || 0}</div>
         </div>
-        <div className="bg-white rounded-lg shadow p-4">
-          <div className="text-sm text-gray-600">Ready</div>
-          <div className="text-2xl font-bold text-green-600">{orders?.filter(o => o.status === "ready").length || 0}</div>
+        <div className="bg-gradient-to-br from-green-50 to-green-100/50 rounded-2xl p-5 border border-green-100/50">
+          <div className="text-xs font-semibold text-green-700 uppercase tracking-wide">Ready</div>
+          <div className="text-2xl font-bold text-green-700 mt-2">{orders?.filter(o => o.status === "ready").length || 0}</div>
         </div>
-        <div className="bg-white rounded-lg shadow p-4">
-          <div className="text-sm text-gray-600">Total Revenue</div>
-          <div className="text-2xl font-bold text-purple-600">৳{(orders?.reduce((sum, o) => sum + o.total, 0) || 0).toFixed(0)}</div>
+        <div className="bg-gradient-to-br from-purple-50 to-purple-100/50 rounded-2xl p-5 border border-purple-100/50">
+          <div className="text-xs font-semibold text-purple-700 uppercase tracking-wide">Total Revenue</div>
+          <div className="text-2xl font-bold text-purple-700 mt-2">৳{(orders?.reduce((sum, o) => sum + o.total, 0) || 0).toFixed(0)}</div>
         </div>
       </div>
 
       {/* Filter */}
-      <div className="bg-white rounded-lg shadow p-4">
-        <label className="block text-sm font-medium text-gray-700 mb-2">
+      <div className="bg-white/80 backdrop-blur-sm rounded-3xl shadow-sm border border-white/60 p-6">
+        <label className="block text-xs font-semibold text-gray-700 mb-3 uppercase tracking-wide">
           Filter by Status
         </label>
         <select
@@ -271,12 +272,12 @@ export function WhatsAppOrders() {
           </div>
         ))}
       </div>
-
       {orders?.length === 0 && (
-        <div className="text-center py-12 bg-white rounded-lg shadow">
-          <p className="text-gray-500">No WhatsApp orders found</p>
+        <div className="text-center py-12 bg-white/80 backdrop-blur-sm rounded-3xl shadow-sm border border-white/60">
+          <p className="text-gray-500 font-medium">No WhatsApp orders found</p>
         </div>
       )}
+      </div>
     </div>
   );
 }
