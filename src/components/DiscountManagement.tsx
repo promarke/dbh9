@@ -144,16 +144,20 @@ export function DiscountManagement() {
   }) || [];
 
   return (
-    <div className="space-y-6">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-50">
+      <div className="space-y-6 p-4 sm:p-6 max-w-7xl mx-auto">
       {/* Header */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-        <h2 className="text-2xl font-bold text-gray-900">🎁 Discount Management</h2>
+        <div>
+          <h1 className="text-3xl sm:text-4xl font-bold text-gray-900">🎁 Discount Management</h1>
+          <p className="text-sm text-gray-600 mt-1">Create and manage promotional discounts</p>
+        </div>
         <button
           onClick={() => {
             resetForm();
             setShowAddModal(true);
           }}
-          className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 font-medium"
+          className="px-6 py-3 bg-gradient-to-r from-purple-600 to-purple-700 hover:from-purple-700 hover:to-purple-800 text-white rounded-2xl font-semibold transition-all duration-300 flex items-center justify-center gap-2 sm:w-auto w-full"
         >
           ➕ Create Discount
         </button>
@@ -162,25 +166,25 @@ export function DiscountManagement() {
       {/* Statistics Cards */}
       {discountStats && activeTab === "stats" && (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
-          <div className="bg-blue-50 rounded-lg p-4 border border-blue-200">
-            <div className="text-3xl font-bold text-blue-600">{discountStats.total}</div>
-            <div className="text-sm text-blue-800">Total Discounts</div>
+          <div className="bg-gradient-to-br from-blue-50 to-blue-100/50 rounded-2xl p-5 border border-blue-100/50">
+            <div className="text-3xl font-bold text-blue-700">{discountStats.total}</div>
+            <div className="text-xs font-semibold text-blue-700 uppercase tracking-wide mt-2">Total Discounts</div>
           </div>
-          <div className="bg-green-50 rounded-lg p-4 border border-green-200">
-            <div className="text-3xl font-bold text-green-600">{discountStats.active}</div>
-            <div className="text-sm text-green-800">Active Now</div>
+          <div className="bg-gradient-to-br from-green-50 to-green-100/50 rounded-2xl p-5 border border-green-100/50">
+            <div className="text-3xl font-bold text-green-700">{discountStats.active}</div>
+            <div className="text-xs font-semibold text-green-700 uppercase tracking-wide mt-2">Active Now</div>
           </div>
-          <div className="bg-yellow-50 rounded-lg p-4 border border-yellow-200">
-            <div className="text-3xl font-bold text-yellow-600">{discountStats.upcoming}</div>
-            <div className="text-sm text-yellow-800">Upcoming</div>
+          <div className="bg-gradient-to-br from-yellow-50 to-yellow-100/50 rounded-2xl p-5 border border-yellow-100/50">
+            <div className="text-3xl font-bold text-yellow-700">{discountStats.upcoming}</div>
+            <div className="text-xs font-semibold text-yellow-700 uppercase tracking-wide mt-2">Upcoming</div>
           </div>
-          <div className="bg-red-50 rounded-lg p-4 border border-red-200">
-            <div className="text-3xl font-bold text-red-600">{discountStats.expired}</div>
-            <div className="text-sm text-red-800">Expired</div>
+          <div className="bg-gradient-to-br from-red-50 to-red-100/50 rounded-2xl p-5 border border-red-100/50">
+            <div className="text-3xl font-bold text-red-700">{discountStats.expired}</div>
+            <div className="text-xs font-semibold text-red-700 uppercase tracking-wide mt-2">Expired</div>
           </div>
-          <div className="bg-purple-50 rounded-lg p-4 border border-purple-200">
-            <div className="text-3xl font-bold text-purple-600">{discountStats.totalUsage}</div>
-            <div className="text-sm text-purple-800">Total Used</div>
+          <div className="bg-gradient-to-br from-purple-50 to-purple-100/50 rounded-2xl p-5 border border-purple-100/50">
+            <div className="text-3xl font-bold text-purple-700">{discountStats.totalUsage}</div>
+            <div className="text-xs font-semibold text-purple-700 uppercase tracking-wide mt-2">Total Used</div>
           </div>
         </div>
       )}
@@ -190,7 +194,7 @@ export function DiscountManagement() {
         <nav className="flex space-x-8">
           <button
             onClick={() => setActiveTab("all")}
-            className={`py-2 px-1 border-b-2 font-medium text-sm ${
+            className={`py-2 px-1 border-b-2 font-semibold text-sm transition-colors ${
               activeTab === "all"
                 ? "border-purple-500 text-purple-600"
                 : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
@@ -603,6 +607,7 @@ export function DiscountManagement() {
           </div>
         </div>
       )}
+      </div>
     </div>
   );
 }

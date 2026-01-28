@@ -239,18 +239,19 @@ export function POS() {
   };
 
   return (
-    <div className="space-y-4 sm:space-y-6">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-50">
+      <div className="space-y-4 sm:space-y-6 p-4 sm:p-6 max-w-7xl mx-auto">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center space-y-2 sm:space-y-0">
+      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
         <div>
-          <h2 className="text-xl sm:text-2xl font-bold text-gray-900">🏷️ Point of Sale</h2>
+          <h1 className="text-3xl sm:text-4xl font-bold text-gray-900">🏷️ Point of Sale</h1>
           <p className="text-sm text-gray-600 mt-1">Process sales transactions</p>
         </div>
         <div className="flex flex-col sm:flex-row gap-2">
           <button
             onClick={clearCart}
             disabled={cart.length === 0}
-            className="px-3 py-2 text-sm border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed font-medium"
+            className="px-6 py-3 text-sm border border-gray-200 rounded-2xl hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed font-semibold transition-all duration-300"
           >
             Clear Cart
           </button>
@@ -261,23 +262,23 @@ export function POS() {
         {/* Products Section */}
         <div className="lg:col-span-2 space-y-4">
           {/* Product Search */}
-          <div className="bg-white rounded-lg shadow border border-gray-200 p-4">
+          <div className="bg-white/80 backdrop-blur-sm rounded-3xl shadow-sm border border-white/60 p-6">
             <div className="flex items-center space-x-2 mb-4">
-              <span className="text-lg">🔍</span>
-              <h3 className="text-lg font-semibold text-gray-900">Search Products</h3>
+              <span className="text-2xl">🔍</span>
+              <h3 className="text-lg font-bold text-gray-900">Search Products</h3>
             </div>
             <input
               type="text"
               placeholder="Search by name, brand, or barcode..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+              className="input-field"
             />
           </div>
 
           {/* Products Grid */}
-          <div className="bg-white rounded-lg shadow border border-gray-200 p-4">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">Available Products</h3>
+          <div className="bg-white/80 backdrop-blur-sm rounded-3xl shadow-sm border border-white/60 p-6">
+            <h3 className="text-lg font-bold text-gray-900 mb-4">Available Products</h3>
             {filteredProducts.length === 0 ? (
               <div className="text-center py-8">
                 <span className="text-4xl">📦</span>
@@ -352,7 +353,7 @@ export function POS() {
                 </div>
                 <button
                   onClick={() => setSelectedCustomer(null)}
-                  className="text-red-600 hover:text-red-800 text-sm"
+                  className="text-red-600 hover:text-red-800 text-sm font-semibold transition-colors"
                 >
                   Remove
                 </button>
@@ -365,15 +366,15 @@ export function POS() {
           </div>
 
           {/* Cart */}
-          <div className="bg-white rounded-lg shadow border border-gray-200 p-4">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">
-              Cart ({cart.length} items)
+          <div className="bg-white/80 backdrop-blur-sm rounded-3xl shadow-sm border border-white/60 p-6">
+            <h3 className="text-lg font-bold text-gray-900 mb-4">
+              🛒 Cart ({cart.length} items)
             </h3>
             
             {cart.length === 0 ? (
-              <div className="text-center py-6">
-                <span className="text-3xl">🛒</span>
-                <p className="text-gray-500 mt-2 text-sm">Cart is empty</p>
+              <div className="text-center py-8">
+                <span className="text-4xl">🛒</span>
+                <p className="text-gray-500 mt-3 text-sm font-medium">Cart is empty</p>
               </div>
             ) : (
               <div className="space-y-3 max-h-64 overflow-y-auto">
@@ -636,6 +637,7 @@ export function POS() {
           }}
         />
       )}
+      </div>
     </div>
   );
 }
