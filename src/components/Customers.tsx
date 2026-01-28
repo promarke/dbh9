@@ -938,6 +938,7 @@ className="w-full px-4 py-3 border border-gray-200 rounded-2xl focus:outline-non
           </div>
         </div>
       )}
+      </div>
     </div>
   );
 }
