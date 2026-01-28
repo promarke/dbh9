@@ -142,23 +142,6 @@ export function DiscountManagement() {
     }
     return true;
   }) || [];
-      description: "",
-      type: "percentage",
-      value: 0,
-      scope: "all_products",
-      categoryIds: [],
-      productIds: [],
-      branchIds: [],
-      startDate: new Date().toISOString().split('T')[0],
-      endDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
-      usageLimit: undefined,
-      minPurchaseAmount: undefined,
-      maxDiscountAmount: undefined,
-    });
-    setShowAddModal(false);
-    setShowEditModal(false);
-    setSelectedDiscount(null);
-  };
 
   return (
     <div className="space-y-6">
