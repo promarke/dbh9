@@ -138,7 +138,9 @@ export function InvoiceModal({ sale, onClose }: InvoiceModalProps) {
   useEffect(() => {
     if (printSettings.includeBarcode && barcodeCanvasRef.current) {
       try {
-        JsBarcode(barcodeCanvasRef.current, sale.saleNumber, {
+        // Generate barcode with website URL
+        const barcodeData = "https://dubaiborkahouse.com";
+        JsBarcode(barcodeCanvasRef.current, barcodeData, {
           format: "CODE128",
           width: 2,
           height: 50,
@@ -588,7 +590,9 @@ export function InvoiceModal({ sale, onClose }: InvoiceModalProps) {
 
               {printSettings.includeBarcode && barcodeDataUrl && (
                 <div className="barcode text-center mb-4">
+                  <div className="text-xs font-bold mb-2">🌐 Visit Us Online 🌐</div>
                   <img src={barcodeDataUrl} alt="Barcode" style={{ maxWidth: '100%', height: 'auto' }} />
+                  <div className="text-xs mt-2 font-bold">www.dubaiborkahouse.com</div>
                 </div>
               )}
 
