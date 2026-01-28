@@ -4,6 +4,7 @@ import { api } from "../../convex/_generated/api";
 import { toast } from "sonner";
 import { PrintTest } from "./PrintTest";
 import { BranchManagement } from "./BranchManagement";
+import { RuleBasedUserManagement } from "./RuleBasedUserManagement";
 
 export function Settings() {
   const [activeTab, setActiveTab] = useState("general");
@@ -34,6 +35,7 @@ export function Settings() {
     { id: "print", name: "Print Test", icon: "🖨️" },
     { id: "backup", name: "Backup & Restore", icon: "💾" },
     { id: "users", name: "User Management", icon: "👥" },
+    { id: "userRules", name: "User Rules", icon: "🔐" },
     { id: "system", name: "System", icon: "🖥️" },
   ];
 
@@ -755,6 +757,14 @@ export function Settings() {
 
       {activeTab === "branches" && (
         <BranchManagement />
+      )}
+
+      {activeTab === "userRules" && (
+        <div className="space-y-4 sm:space-y-6">
+          <div className="bg-white rounded-lg shadow p-4 sm:p-6 border border-gray-200">
+            <RuleBasedUserManagement />
+          </div>
+        </div>
       )}
 
       {activeTab === "system" && (

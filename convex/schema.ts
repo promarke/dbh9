@@ -519,6 +519,62 @@ const applicationTables = {
   })
     .index("by_date", ["date"])
     .index("by_channel", ["channel"]),
+
+  // User Roles
+  userRoles: defineTable({
+    name: v.string(),
+    description: v.optional(v.string()),
+    permissions: v.array(v.string()), // Array of permission names
+    createdAt: v.number(),
+    updatedAt: v.number(),
+    isActive: v.boolean(),
+  })
+    .index("by_name", ["name"]),
+
+  // User Rules
+  userRules: defineTable({
+    name: v.string(),
+    description: v.optional(v.string()),
+    condition: v.string(), // JavaScript expression to evaluate
+    action: v.string(), // Action to take if condition is true
+    actionParams: v.optional(v.object({
+      roleId: v.optional(v.id("userRoles")),
+      roleName: v.optional(v.string()),
+      permissions: v.optional(v.array(v.string())),
+      metadata: v.optional(v.any()),
+    })),
+    isActive: v.boolean(),
+    priority: v.number(), // Higher priority rules execute first
+    createdAt: v.number(),
+    updatedAt: v.number(),
+  })
+    .index("by_active", ["isActive"])
+    .index("by_priority", ["priority"]),
+
+  // User Rule Applications Log
+  ruleApplicationLog: defineTable({
+    ruleId: v.id("userRules"),
+    ruleName: v.string(),
+    userId: v.id("users"),
+    userName: v.string(),
+    applicationType: v.string(), // "auto", "manual", "scheduled"
+    result: v.string(), // "success", "failed", "skipped"
+    resultMessage: v.optional(v.string()),
+    appliedAt: v.number(),
+  })
+    .index("by_rule", ["ruleId"])
+    .index("by_user", ["userId"])
+    .index("by_applied_at", ["appliedAt"]),
+
+  // Permission Templates
+  permissionTemplates: defineTable({
+    name: v.string(),
+    description: v.optional(v.string()),
+    permissions: v.array(v.string()),
+    category: v.string(), // "sales", "inventory", "reports", "admin", "settings"
+    createdAt: v.number(),
+  })
+    .index("by_category", ["category"]),
 };
 
 
