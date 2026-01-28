@@ -1,5 +1,7 @@
 import { useState, useRef, useEffect } from "react";
 import { Id } from "../../convex/_generated/dataModel";
+import { useQuery } from "convex/react";
+import { api } from "../../convex/_generated/api";
 import { toast } from "sonner";
 import QRCode from "qrcode";
 import JsBarcode from "jsbarcode";
@@ -49,15 +51,18 @@ interface PrintSettings {
 }
 
 export function InvoiceModal({ sale, onClose }: InvoiceModalProps) {
+  const storeSettings = useQuery(api.settings.get);
+  
   const [shopSettings, setShopSettings] = useState({
     name: "DUBAI BORKA HOUSE",
-    address: "Dubai Fashion District, UAE",
-    phone1: "+971-XX-XXXXXXX",
-    phone2: "+880-1XXX-XXXXXX",
-    email: "info@raisadubai.com",
-    website: "www.raisadubai.com",
+    address: "Shop-342, Label-4, Meridian Kohinur City, GEC, Chittagong.",
+    phone1: "+880-1845-853634",
+    phone2: "+880-1977-403060",
+    email: "info@dubaiborkahouse.com",
+    website: "www.dubaiborkahouse.com",
     vatNumber: "VAT: 123456789",
-    trn: "TRN: 100123456789003"
+    trn: "TRN: 100123456789003",
+    logo: ""
   });
 
   const [printSettings, setPrintSettings] = useState<PrintSettings>({
@@ -90,7 +95,15 @@ export function InvoiceModal({ sale, onClose }: InvoiceModalProps) {
     if (savedPrintSettings) {
       setPrintSettings(JSON.parse(savedPrintSettings));
     }
-  }, []);
+
+    // Load logo from store settings
+    if (storeSettings?.logo) {
+      setShopSettings(prev => ({
+        ...prev,
+        logo: storeSettings.logo
+      }));
+    }
+  }, [storeSettings]);
 
   useEffect(() => {
     localStorage.setItem('shopSettings', JSON.stringify(shopSettings));
@@ -480,19 +493,28 @@ export function InvoiceModal({ sale, onClose }: InvoiceModalProps) {
             >
               {/* Header */}
               <div className="invoice-header text-center mb-4">
-                {printSettings.includeLogo && (
-                  <div className="logo-placeholder mx-auto mb-3">
-                    LOGO
+                {printSettings.includeLogo && shopSettings.logo && (
+                  <div className="text-center mx-auto mb-3">
+                    <img 
+                      src={shopSettings.logo} 
+                      alt="Logo" 
+                      style={{ 
+                        maxWidth: '80px',
+                        maxHeight: '80px',
+                        margin: '0 auto 8px'
+                      }}
+                    />
                   </div>
                 )}
                 <div className="shop-name text-lg font-bold uppercase">{shopSettings.name}</div>
                 <div className="shop-details">
                   <p className="text-xs">{shopSettings.address}</p>
                   <p className="text-xs">📞 {shopSettings.phone1}</p>
-                  {shopSettings.phone2 && <p className="text-xs">📱 {shopSettings.phone2}</p>}
+                  {shopSettings.phone2 && <p className="text-xs">📞 {shopSettings.phone2}</p>}
                   <p className="text-xs">📧 {shopSettings.email}</p>
-                  {shopSettings.vatNumber && <p className="text-xs">{shopSettings.vatNumber}</p>}
-                  {shopSettings.trn && <p className="text-xs">{shopSettings.trn}</p>}
+                  <p className="text-xs">{shopSettings.website}</p>
+                  {shopSettings.vatNumber && <p className="text-xs font-bold">{shopSettings.vatNumber}</p>}
+                  {shopSettings.trn && <p className="text-xs font-bold">{shopSettings.trn}</p>}
                 </div>
               </div>
 
@@ -588,7 +610,7 @@ export function InvoiceModal({ sale, onClose }: InvoiceModalProps) {
               {/* Footer */}
               <div className="invoice-footer text-center">
                 <p className="font-bold mb-2">🌟 TERMS & CONDITIONS 🌟</p>
-                <p className="mb-1">• Return within 48 hours with receipt</p>
+                <p className="text-xs mb-1">• Replace within 3 days with receipt</p>
                 <div className="divider"></div>
                 <p className="font-bold text-lg mb-2">Thank You for Shopping!</p>
                 <p className="font-bold mb-2">جزاك الله خيرا</p>
