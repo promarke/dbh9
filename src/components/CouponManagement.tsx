@@ -69,10 +69,6 @@ export default function CouponManagement() {
   const createCouponMutation = useMutation(api.coupons.create);
   const updateCouponMutation = useMutation(api.coupons.update);
   const deleteCouponMutation = useMutation(api.coupons.delete_);
-  const validateCouponQuery = useQuery(api.coupons.validateCoupon, {
-    code: "",
-    orderAmount: 0,
-  });
 
   const filteredCoupons = (coupons || []).filter((coupon: any) => {
     const matchSearch =
