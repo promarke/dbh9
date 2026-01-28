@@ -68,7 +68,7 @@ export default function CouponManagement() {
   // Mutations
   const createCouponMutation = useMutation(api.coupons.create);
   const updateCouponMutation = useMutation(api.coupons.update);
-  const deleteCouponMutation = useMutation(api.coupons.delete);
+  const deleteCouponMutation = useMutation(api.coupons.delete_);
   const validateCouponQuery = useQuery(api.coupons.validateCoupon, {
     code: "",
     orderAmount: 0,
@@ -605,7 +605,7 @@ export default function CouponManagement() {
                                 style={{
                                   width: `${
                                     ((coupon?.usageCount || 0) /
-                                      (filteredCoupons[0]?.usageCount || 1)) *
+                                      (filteredCoupons[0]?.usedCount || 1)) *
                                     100
                                   }%`,
                                 }}
