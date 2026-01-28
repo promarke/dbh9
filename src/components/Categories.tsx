@@ -508,6 +508,7 @@ export function Categories() {
           </div>
         </div>
       )}
+      </div>
     </div>
   );
 }
