@@ -1,6 +1,10 @@
 import { SignInForm } from "../SignInForm";
+import { useQuery } from "convex/react";
+import { api } from "../../convex/_generated/api";
 
 export function LoginWrapper() {
+  const storeSettings = useQuery(api.settings.get);
+
   return (
     <div className="min-h-screen flex items-center justify-center relative overflow-hidden">
       {/* Animated Background */}
@@ -19,12 +23,23 @@ export function LoginWrapper() {
       <div className="relative z-10 w-full max-w-md mx-4">
         {/* Logo and Brand Section */}
         <div className="text-center mb-8 animate-fadeInUp">
-          <div className="inline-flex items-center justify-center w-20 h-20 bg-white/10 backdrop-blur-md rounded-full mb-6 border border-white/20">
-            <span className="text-4xl">🏪</span>
+          <div className="inline-flex items-center justify-center w-32 h-32 bg-white/10 backdrop-blur-md rounded-full mb-6 border border-white/20">
+            {storeSettings?.logo ? (
+              <img 
+                src={storeSettings.logo} 
+                alt="Store Logo" 
+                className="w-28 h-28 object-contain"
+              />
+            ) : (
+              <span className="text-6xl">🏪</span>
+            )}
           </div>
           <h1 className="text-3xl sm:text-4xl font-bold text-white mb-2">
-            DUBAI BORKA HOUSE
+            {storeSettings?.storeTitle || "DUBAI BORKA HOUSE"}
           </h1>
+          {storeSettings?.tagline && (
+            <p className="text-purple-200 text-sm mb-2">{storeSettings.tagline}</p>
+          )}
           <div className="w-24 h-1 bg-gradient-to-r from-purple-400 to-pink-400 rounded-full mx-auto mt-4"></div>
         </div>
 

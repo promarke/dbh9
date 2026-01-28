@@ -132,9 +132,9 @@ export default function App() {
                 className="flex items-center space-x-2 text-purple-600"
               >
                 {storeSettings?.logo ? (
-                  <img src={storeSettings.logo} alt="Logo" className="h-8 w-8 object-contain" />
+                  <img src={storeSettings.logo} alt="Logo" className="h-10 w-10 object-contain flex-shrink-0" />
                 ) : (
-                  <span className="text-xl">🏪</span>
+                  <span className="text-2xl">🏪</span>
                 )}
                 <span className="font-bold text-sm">{storeSettings?.storeTitle || "DUBAI BORKA HOUSE"}</span>
               </button>
@@ -176,9 +176,9 @@ export default function App() {
               <div className="flex flex-col flex-grow pt-5 pb-4 overflow-y-auto">
                 <div className="flex items-center flex-shrink-0 px-4 mb-6">
                   {storeSettings?.logo ? (
-                    <img src={storeSettings.logo} alt="Logo" className="h-10 w-10 object-contain mr-3" />
+                    <img src={storeSettings.logo} alt="Logo" className="h-16 w-16 object-contain mr-3 flex-shrink-0" />
                   ) : (
-                    <span className="text-2xl mr-3">🏪</span>
+                    <span className="text-3xl mr-3">🏪</span>
                   )}
                   <div>
                     <h1 className="text-lg font-bold text-gray-900">{storeSettings?.storeTitle || "DUBAI BORKA HOUSE"}</h1>

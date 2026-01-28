@@ -6,6 +6,7 @@ export function Dashboard() {
   const sales = useQuery(api.sales.list, {}) || [];
   const categories = useQuery(api.categories.list) || [];
   const customers = useQuery(api.customers.list, {}) || [];
+  const storeSettings = useQuery(api.settings.get);
 
   // Calculate stats
   const totalProducts = products.length;
@@ -54,8 +55,29 @@ export function Dashboard() {
 
   return (
     <div className="space-y-4 sm:space-y-6">
-      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center space-y-2 sm:space-y-0">
-        <h2 className="text-xl sm:text-2xl font-bold text-gray-900">📊 Dashboard</h2>
+      {/* Header with Logo and Title */}
+      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center space-y-4 sm:space-y-0">
+        <div className="flex items-center gap-4">
+          <div className="flex-shrink-0">
+            {storeSettings?.logo ? (
+              <img 
+                src={storeSettings.logo} 
+                alt="Store Logo" 
+                className="h-16 w-16 sm:h-20 sm:w-20 object-contain"
+              />
+            ) : (
+              <div className="text-4xl sm:text-5xl">🏪</div>
+            )}
+          </div>
+          <div>
+            <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">
+              {storeSettings?.storeTitle || "DUBAI BORKA HOUSE"}
+            </h1>
+            {storeSettings?.tagline && (
+              <p className="text-sm text-gray-600">{storeSettings.tagline}</p>
+            )}
+          </div>
+        </div>
         <div className="text-sm text-gray-600">
           Last updated: {new Date().toLocaleString('en-BD')}
         </div>
