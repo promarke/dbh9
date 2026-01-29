@@ -404,7 +404,11 @@ export default function Inventory() {
               </p>
             </div>
             <button
-              onClick={() => setShowAddProduct(true)}
+              onClick={() => {
+                setShowAddProduct(true);
+                // Reset variants when opening modal
+                setProductVariants([{ id: `variant-${Date.now()}`, color: "", size: "", stock: 0 }]);
+              }}
               className="flex items-center gap-2 px-6 py-3 bg-purple-600 text-white rounded-lg hover:bg-purple-700 font-semibold transition-all duration-300 focus:ring-2 focus:ring-purple-500 focus:ring-offset-2 shadow-lg hover:shadow-xl whitespace-nowrap"
             >
               <span className="text-xl">➕</span>
@@ -614,6 +618,13 @@ export default function Inventory() {
               </div>
 
               <div className="space-y-6">
+                {/* Validation Info Banner */}
+                <div className="bg-blue-50 border border-blue-200 p-3 rounded-lg">
+                  <p className="text-sm text-blue-800">
+                    ℹ️ <strong>Tip:</strong> Each variant (color/size combination) will create a unique product. Fill in at least one variant to proceed.
+                  </p>
+                </div>
+
                 {/* Basic Product Information */}
                 <div className="bg-gray-50 p-4 rounded-lg">
                   <h4 className="font-medium text-gray-900 mb-4">Basic Product Information</h4>
@@ -904,14 +915,18 @@ export default function Inventory() {
                             <input
                               type="number"
                               value={variant.stock}
-                              onChange={(e) => updateVariant(index, 'stock', Number(e.target.value))}
+                              onChange={(e) => {
+                                const value = e.target.value === '' ? 0 : Math.max(0, Number(e.target.value));
+                                updateVariant(index, 'stock', value);
+                              }}
                               className={`w-full px-2 py-1 border rounded text-sm focus:ring-2 focus:ring-purple-500 transition-all ${
                                 variant.stock > 0 ? 'border-gray-300' : 'border-red-300 bg-red-50'
                               }`}
-                              min="0"
+                              min="1"
+                              step="1"
                               placeholder="0"
                             />
-                            {variant.stock === 0 && (
+                            {variant.stock <= 0 && (
                               <p className="text-xs text-red-600 mt-1">Stock must be greater than 0</p>
                             )}
                           </div>
@@ -1005,10 +1020,14 @@ export default function Inventory() {
                     onClick={handleAddProduct}
                     className="flex-1 px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 font-medium transition-colors"
                   >
-                    Add Product Variants ({productVariants.filter(v => v.color && v.size && v.stock > 0).length})
+                    Add Product Variants ({productVariants.filter(v => v.color?.trim() && v.size?.trim() && typeof v.stock === 'number' && v.stock > 0).length})
                   </button>
                   <button
-                    onClick={() => setShowAddProduct(false)}
+                    onClick={() => {
+                      setShowAddProduct(false);
+                      // Reset variants when closing modal
+                      setProductVariants([{ id: `variant-${Date.now()}`, color: "", size: "", stock: 0 }]);
+                    }}
                     className="flex-1 px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 font-medium transition-colors"
                   >
                     Cancel
