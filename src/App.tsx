@@ -161,35 +161,41 @@ export default function App() {
         <LoginWrapper />
       </Unauthenticated>
       <Authenticated>
-        <div className="min-h-screen flex flex-col bg-gray-50 pb-16 lg:pb-0">
+        <div className="min-h-screen flex flex-col bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 pb-16 lg:pb-0">
           {/* Mobile Header */}
-          <div className="lg:hidden bg-white shadow-sm border-b border-gray-200 sticky top-0 z-40">
-            <div className="flex items-center justify-between px-4 py-3">
+          <div className="lg:hidden sticky top-0 z-40 bg-white/10 backdrop-blur-xl border-b border-white/20 shadow-lg">
+            <div className="flex items-center justify-between px-4 py-3 gap-3">
+              {/* Menu Toggle */}
               <button
                 onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-                className="flex items-center space-x-2 text-purple-600 hover:text-purple-700"
+                className="flex-shrink-0 w-10 h-10 rounded-lg bg-white/10 border border-white/20 flex items-center justify-center text-white hover:bg-white/20 transition-all duration-200"
               >
-                <span className="text-2xl">☰</span>
+                <span className="text-lg">☰</span>
               </button>
-              {storeSettings?.logo ? (
-                <img src={storeSettings.logo} alt="Logo" className="h-10 w-10 object-contain flex-shrink-0" />
-              ) : (
-                <span className="text-2xl">🏪</span>
-              )}
-              <span className="text-xs font-bold text-gray-800 hidden sm:inline">
-                {storeSettings?.storeTitle || "DUBAI BORKA HOUSE"}
-              </span>
-              <div className="flex items-center space-x-2">
-                <span className="text-xs text-gray-600 hidden sm:block">
-                  {mobileMenuItems.find(item => item.id === activeTab)?.name}
-                </span>
+
+              {/* Logo & Store Title */}
+              <div className="flex items-center gap-2 flex-1">
+                <div className="flex-shrink-0 w-10 h-10 rounded-lg bg-white/10 border border-white/20 flex items-center justify-center">
+                  {storeSettings?.logo ? (
+                    <img src={storeSettings.logo} alt="Logo" className="w-8 h-8 object-contain" />
+                  ) : (
+                    <span className="text-lg">🏪</span>
+                  )}
+                </div>
+                <h1 className="text-sm font-bold text-white truncate">
+                  {(storeSettings?.storeTitle || "DUBAI BORKA HOUSE").split(" ")[0]}
+                </h1>
+              </div>
+
+              {/* Sign Out */}
+              <div className="flex-shrink-0">
                 <SignOutButton />
               </div>
             </div>
 
             {/* Mobile Menu Dropdown */}
             {isMobileMenuOpen && (
-              <div className="absolute top-full left-0 right-0 bg-white shadow-lg border-t border-gray-200 z-50">
+              <div className="absolute top-full left-0 right-0 bg-white/10 backdrop-blur-xl border-t border-white/20 shadow-xl z-50">
                 <div className="max-h-96 overflow-y-auto">
                   {mobileMenuItems.map((item) => (
                     <button
@@ -198,12 +204,14 @@ export default function App() {
                         setActiveTab(item.id);
                         setIsMobileMenuOpen(false);
                       }}
-                      className={`w-full flex items-center space-x-3 px-4 py-3 text-left hover:bg-gray-50 border-b border-gray-100 transition-colors ${
-                        activeTab === item.id ? "bg-purple-50 text-purple-600 border-r-4 border-r-purple-600" : "text-gray-700"
+                      className={`w-full flex items-center gap-3 px-4 py-3 text-left border-b border-white/10 transition-all duration-200 ${
+                        activeTab === item.id 
+                          ? "bg-white/20 text-white border-l-4 border-l-purple-400" 
+                          : "text-white/70 hover:bg-white/10 hover:text-white"
                       }`}
                     >
-                      <span className="text-lg">{item.icon}</span>
-                      <span className="font-medium">{item.name}</span>
+                      <span className="text-lg flex-shrink-0">{item.icon}</span>
+                      <span className="font-medium text-sm">{item.name}</span>
                     </button>
                   ))}
                 </div>
@@ -211,43 +219,61 @@ export default function App() {
             )}
           </div>
 
-          <div className="flex h-screen">
-            {/* Desktop Sidebar - Fixed */}
-            <div className="hidden lg:flex lg:flex-col lg:w-64 lg:fixed lg:inset-y-0 lg:bg-white lg:border-r lg:border-gray-200 lg:shadow-sm">
-              <div className="flex flex-col flex-grow py-4 overflow-y-auto">
-                <div className="flex items-center justify-center flex-shrink-0 px-4 mb-8">
-                  {storeSettings?.logo ? (
-                    <img src={storeSettings.logo} alt="Logo" className="h-16 w-16 object-contain flex-shrink-0" />
-                  ) : (
-                    <span className="text-4xl">🏪</span>
+          <div className="flex h-screen lg:h-auto">
+            {/* Desktop Sidebar - Modern Design */}
+            <div className="hidden lg:flex lg:flex-col lg:w-72 lg:fixed lg:inset-y-0 lg:bg-gradient-to-b lg:from-slate-800 lg:to-slate-900 lg:border-r lg:border-white/10 lg:shadow-2xl">
+              {/* Logo Section */}
+              <div className="flex items-center justify-center flex-shrink-0 px-6 py-6 border-b border-white/10">
+                <div className="text-center">
+                  <div className="w-16 h-16 rounded-xl bg-gradient-to-br from-purple-400/20 to-blue-400/20 border border-white/20 flex items-center justify-center mb-3 mx-auto shadow-lg">
+                    {storeSettings?.logo ? (
+                      <img src={storeSettings.logo} alt="Logo" className="w-14 h-14 object-contain" />
+                    ) : (
+                      <span className="text-3xl">🏪</span>
+                    )}
+                  </div>
+                  <h2 className="text-sm font-bold text-white mb-1">
+                    {storeSettings?.storeTitle || "DUBAI BORKA HOUSE"}
+                  </h2>
+                  {storeSettings?.tagline && (
+                    <p className="text-xs text-white/50">{storeSettings.tagline}</p>
                   )}
                 </div>
-                <nav className="mt-5 flex-1 px-2 space-y-1">
-                  {desktopMenuItems.map((item) => (
-                    <button
-                      key={item.id}
-                      onClick={() => setActiveTab(item.id)}
-                      className={`group flex items-center px-2 py-2 text-sm font-medium rounded-md w-full text-left transition-colors ${
-                        activeTab === item.id
-                          ? "bg-purple-100 text-purple-900"
-                          : "text-gray-600 hover:bg-gray-50 hover:text-gray-900"
-                      }`}
-                    >
-                      <span className="mr-3 text-lg">{item.icon}</span>
-                      {item.name}
-                    </button>
-                  ))}
-                </nav>
-                <div className="flex-shrink-0 border-t border-gray-200 p-4">
-                  <SignOutButton />
-                </div>
+              </div>
+
+              {/* Navigation */}
+              <nav className="flex-1 px-3 py-6 overflow-y-auto space-y-2">
+                {desktopMenuItems.map((item) => (
+                  <button
+                    key={item.id}
+                    onClick={() => setActiveTab(item.id)}
+                    className={`group w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-200 text-left font-medium text-sm ${
+                      activeTab === item.id
+                        ? "bg-gradient-to-r from-purple-500/30 to-blue-500/20 text-white border border-purple-400/30 shadow-lg shadow-purple-500/20"
+                        : "text-white/70 hover:text-white hover:bg-white/10"
+                    }`}
+                  >
+                    <span className={`text-lg flex-shrink-0 transition-transform duration-200 ${activeTab === item.id ? "scale-110" : "group-hover:scale-110"}`}>
+                      {item.icon}
+                    </span>
+                    <span className="flex-1">{item.name}</span>
+                    {activeTab === item.id && (
+                      <span className="w-2 h-2 rounded-full bg-purple-400"></span>
+                    )}
+                  </button>
+                ))}
+              </nav>
+
+              {/* Footer */}
+              <div className="flex-shrink-0 border-t border-white/10 p-4">
+                <SignOutButton />
               </div>
             </div>
 
             {/* Main Content */}
-            <div className="lg:pl-64 flex flex-col flex-1 overflow-hidden">
+            <div className="lg:pl-72 flex flex-col flex-1 overflow-hidden">
               <main className="flex-1 overflow-auto">
-                <div className="py-4 px-4 sm:px-6 lg:px-8">
+                <div className="py-6 px-4 sm:px-6 lg:px-8">
                   {renderContent()}
                 </div>
               </main>
@@ -255,20 +281,20 @@ export default function App() {
           </div>
 
           {/* Mobile Bottom Navigation */}
-          <div className="lg:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 z-40">
-            <div className="grid grid-cols-4">
+          <div className="lg:hidden fixed bottom-0 left-0 right-0 bg-white/10 backdrop-blur-xl border-t border-white/20 z-40">
+            <div className="grid grid-cols-4 gap-1 p-2">
               {mobileBottomNavItems.map((item) => (
                 <button
                   key={item.id}
                   onClick={() => setActiveTab(item.id)}
-                  className={`flex flex-col items-center justify-center py-2 px-1 transition-colors ${
+                  className={`flex flex-col items-center justify-center py-3 rounded-lg transition-all duration-200 ${
                     activeTab === item.id
-                      ? "text-purple-600 bg-purple-50"
-                      : "text-gray-600 hover:text-gray-900 hover:bg-gray-50"
+                      ? "bg-gradient-to-br from-purple-500/30 to-blue-500/20 text-white"
+                      : "text-white/60 hover:text-white hover:bg-white/10"
                   }`}
                 >
-                  <span className="text-lg mb-1">{item.icon}</span>
-                  <span className="text-xs font-medium truncate">{item.name}</span>
+                  <span className="text-xl">{item.icon}</span>
+                  <span className="text-xs font-semibold mt-1">{item.name}</span>
                 </button>
               ))}
             </div>

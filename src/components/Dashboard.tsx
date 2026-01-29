@@ -54,68 +54,88 @@ export function Dashboard() {
     .slice(0, 5);
 
   return (
-    <div className="w-full bg-gradient-to-br from-slate-50 via-white to-slate-50">
-      {/* Fixed Header */}
-      <div className="fixed top-0 left-0 right-0 z-40 bg-white/95 backdrop-blur-sm border-b border-gray-200/50 shadow-sm w-full">
-        <div className="p-4 sm:p-6 max-w-7xl mx-auto">
-          <div className="flex items-center gap-4 mb-3">
-            <div className="flex-shrink-0">
-              {storeSettings?.logo ? (
-                <img 
-                  src={storeSettings.logo} 
-                  alt="Store Logo" 
-                  className="h-14 w-14 sm:h-16 sm:w-16 object-contain filter drop-shadow-md"
-                />
-              ) : (
-                <div className="text-4xl sm:text-5xl">🏪</div>
-              )}
+    <div className="w-full min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900">
+      {/* Header */}
+      <div className="sticky top-0 z-40 bg-white/10 backdrop-blur-xl border-b border-white/20 shadow-lg">
+        <div className="mx-auto px-4 sm:px-6 lg:px-8 py-4">
+          <div className="flex items-center justify-between gap-4">
+            {/* Left: Logo & Store Info */}
+            <div className="flex items-center gap-3">
+              <div className="flex-shrink-0 w-12 h-12 sm:w-14 sm:h-14 rounded-xl bg-white/10 backdrop-blur-sm flex items-center justify-center border border-white/20 shadow-lg">
+                {storeSettings?.logo ? (
+                  <img 
+                    src={storeSettings.logo} 
+                    alt="Store Logo" 
+                    className="w-10 h-10 sm:w-12 sm:h-12 object-contain"
+                  />
+                ) : (
+                  <span className="text-2xl">🏪</span>
+                )}
+              </div>
+              <div className="hidden sm:block">
+                <h1 className="text-lg sm:text-xl font-bold text-white leading-tight">
+                  {storeSettings?.storeTitle || "DUBAI BORKA HOUSE"}
+                </h1>
+                {storeSettings?.tagline && (
+                  <p className="text-xs text-white/70 mt-0.5">{storeSettings.tagline}</p>
+                )}
+              </div>
             </div>
-            <div className="flex-1">
-              <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 tracking-tight bg-gradient-to-r from-purple-600 to-blue-600 bg-clip-text text-transparent">
-                {storeSettings?.storeTitle || "DUBAI BORKA HOUSE"}
-              </h1>
-              {storeSettings?.tagline && (
-                <p className="text-xs text-gray-500 font-medium mt-0.5">{storeSettings.tagline}</p>
-              )}
+
+            {/* Center: Date & Time */}
+            <div className="hidden md:flex items-center gap-2 px-4 py-2 rounded-lg bg-white/5 border border-white/10">
+              <span className="text-sm text-white/70">📅</span>
+              <span className="text-sm font-medium text-white">{new Date().toLocaleDateString('en-BD')}</span>
             </div>
-          </div>
-          <div className="text-xs text-gray-400 font-medium tracking-wide">
-            📅 {new Date().toLocaleString('en-BD')}
+
+            {/* Right: Search/Info */}
+            <div className="flex items-center gap-3">
+              <div className="text-xs sm:text-sm text-white/60">
+                {new Date().toLocaleTimeString('en-BD', { hour: '2-digit', minute: '2-digit' })}
+              </div>
+            </div>
           </div>
         </div>
       </div>
 
-      {/* Scrollable Content */}
-      <div className="pt-44 sm:pt-48 pb-8 px-4 sm:px-6 max-w-7xl mx-auto">
+      {/* Content */}
+      <div className="mx-auto px-4 sm:px-6 lg:px-8 py-8 max-w-7xl">
         <div className="space-y-6">
-      {/* Key Metrics - iOS Style Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
-        {/* Total Products Card */}
-        <div className="group relative overflow-hidden bg-gradient-to-br from-blue-50/40 via-white to-slate-50/40 backdrop-blur-sm rounded-3xl p-5 sm:p-6 shadow-lg hover:shadow-2xl transition-all duration-500 border border-blue-200/40 hover:border-blue-300/60 hover:bg-gradient-to-br hover:from-blue-50 hover:to-white">
-          <div className="absolute inset-0 bg-gradient-to-br from-blue-100/30 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none"></div>
-          <div className="relative z-10 flex items-start justify-between">
-            <div className="flex-1">
-              <p className="text-xs sm:text-sm font-semibold text-gray-500 tracking-wide uppercase mb-2">Total Entry Bundles</p>
-              <p className="text-2xl sm:text-3xl font-bold text-gray-900">{totalProducts}</p>
-              <p className="text-xs text-gray-400 mt-2 font-medium">Active in inventory</p>
+          {/* Key Metrics - Modern Card Design */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
+            {/* Total Products Card */}
+            <div className="group relative rounded-2xl overflow-hidden bg-white/10 backdrop-blur-md border border-white/20 hover:border-white/40 transition-all duration-300 hover:shadow-xl hover:shadow-blue-500/10">
+              <div className="absolute inset-0 bg-gradient-to-br from-blue-400/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+              <div className="relative p-5 sm:p-6">
+                <div className="flex items-start justify-between">
+                  <div className="flex-1">
+                    <p className="text-xs sm:text-sm font-semibold text-white/70 uppercase tracking-wider mb-2">Total Entry Bundles</p>
+                    <p className="text-3xl sm:text-4xl font-bold text-white">{totalProducts}</p>
+                    <p className="text-xs text-white/50 mt-2">Active in inventory</p>
+                  </div>
+                  <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-blue-400/20 to-blue-600/20 border border-blue-400/30 flex items-center justify-center text-xl group-hover:scale-110 transition-transform duration-300">
+                    📦
+                  </div>
+                </div>
+              </div>
             </div>
-            <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-blue-100 to-blue-50 flex items-center justify-center text-xl group-hover:scale-110 transition-transform duration-300 shadow-md group-hover:shadow-lg">
-              📦
-            </div>
-          </div>
-        </div>
 
-        {/* Total Abayas Card */}
-        <div className="group relative overflow-hidden bg-gradient-to-br from-green-50/40 via-white to-emerald-50/40 backdrop-blur-sm rounded-3xl p-5 sm:p-6 shadow-lg hover:shadow-2xl transition-all duration-500 border border-green-200/40 hover:border-green-300/60 hover:bg-gradient-to-br hover:from-green-50 hover:to-white">
-          <div className="absolute inset-0 bg-gradient-to-br from-green-100/30 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none"></div>
-          <div className="relative z-10 flex items-start justify-between">
-            <div className="flex-1">
-              <p className="text-xs sm:text-sm font-semibold text-gray-500 tracking-wide uppercase mb-2">Abayas In Stock</p>
-              <p className="text-2xl sm:text-3xl font-bold text-gray-900">{totalAbayas}</p>
-              <p className="text-xs text-gray-400 mt-2 font-medium">Ready for sale</p>
+            {/* Total Abayas Card */}
+            <div className="group relative rounded-2xl overflow-hidden bg-white/10 backdrop-blur-md border border-white/20 hover:border-white/40 transition-all duration-300 hover:shadow-xl hover:shadow-green-500/10">
+              <div className="absolute inset-0 bg-gradient-to-br from-green-400/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+              <div className="relative p-5 sm:p-6">
+                <div className="flex items-start justify-between">
+                  <div className="flex-1">
+                    <p className="text-xs sm:text-sm font-semibold text-white/70 uppercase tracking-wider mb-2">Abayas In Stock</p>
+                    <p className="text-3xl sm:text-4xl font-bold text-white">{totalAbayas}</p>
+                    <p className="text-xs text-white/50 mt-2">Ready for sale</p>
+                  </div>
+                  <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-green-400/20 to-green-600/20 border border-green-400/30 flex items-center justify-center text-xl group-hover:scale-110 transition-transform duration-300">
+                    👗
+                  </div>
+                </div>
+              </div>
             </div>
-            <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-green-100 to-green-50 flex items-center justify-center text-xl group-hover:scale-110 transition-transform duration-300 shadow-md group-hover:shadow-lg">
-              👗
             </div>
           </div>
         </div>
