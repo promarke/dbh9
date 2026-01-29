@@ -126,7 +126,7 @@ export default function Inventory() {
   // Common abaya sizes and colors - static arrays for performance
   const commonSizes = useMemo(() => ['50"', '52"', '54"', '56"', '58"', '60"', '62"'], []);
   const commonColors = useMemo(() => [
-    'Black', 'Navy Blue', 'Dark Brown', 'Maroon', 'Dark Green', 
+    'Black', 'Navy Blue', 'Dark Brown', 'Maroon', 'Dark Green', 'Lemon', 'Pink', 'Mint', 
     'Purple', 'Grey', 'Beige', 'White', 'Cream', 'Gold', 'Silver'
   ], []);
 
@@ -742,6 +742,9 @@ export default function Inventory() {
                         <option value="Lace">Lace</option>
                         <option value="Sequined">Sequined</option>
                         <option value="Stone Work">Stone Work</option>
+                        <option value="HAND WORK">HAND WORK</option>
+                        <option value="ARI WORK">ARI WORK</option>
+                        <option value="CREP Work">CREP Work</option>
                       </select>
                     </div>
 
