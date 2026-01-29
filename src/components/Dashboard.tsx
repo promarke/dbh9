@@ -380,22 +380,6 @@ export function Dashboard() {
           </div>
         </div>
       </div>
-                    {sale.customerName || 'Walk-in Customer'} • {new Date(sale._creationTime).toLocaleDateString('en-BD')}
-                  </p>
-                </div>
-                <div className="text-right ml-4">
-                  <p className="text-sm font-bold text-gray-900">৳{sale.total.toLocaleString('en-BD')}</p>
-                  <p className="text-xs text-gray-500 font-medium mt-1">{sale.items.length} items</p>
-                </div>
-              </div>
-            </div>
-          ))}
-          {sales.length === 0 && (
-            <p className="text-gray-400 text-center py-8 font-medium">No recent sales</p>
-          )}
-        </div>
-      </div>
-    </div>
     </div>
   );
 }
