@@ -1,12 +1,15 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, lazy, Suspense } from "react";
 import { useQuery, useMutation } from "convex/react";
 import { api } from "../../convex/_generated/api";
 import { toast } from "sonner";
 import { PrintTest } from "./PrintTest";
-import { BranchManagement } from "./BranchManagement";
-import { RuleBasedUserManagement } from "./RuleBasedUserManagement";
-import CustomerLoyalty from "./CustomerLoyalty";
-import CouponManagement from "./CouponManagement";
+import { LazyLoadingFallback } from "../utils/lazyLoad";
+
+// Lazy load sub-components to avoid React context issues
+const BranchManagement = lazy(() => import("./BranchManagement").then(m => ({ default: m.BranchManagement })));
+const RuleBasedUserManagement = lazy(() => import("./RuleBasedUserManagement").then(m => ({ default: m.RuleBasedUserManagement })));
+const CustomerLoyalty = lazy(() => import("./CustomerLoyalty"));
+const CouponManagement = lazy(() => import("./CouponManagement"));
 
 export function Settings() {
   const [activeTab, setActiveTab] = useState("general");
@@ -1000,26 +1003,34 @@ export function Settings() {
       )}
 
       {activeTab === "branches" && (
-        <BranchManagement />
+        <Suspense fallback={<LazyLoadingFallback />}>
+          <BranchManagement />
+        </Suspense>
       )}
 
       {activeTab === "userRules" && (
         <div className="space-y-4 sm:space-y-6">
           <div className="bg-white rounded-lg shadow p-4 sm:p-6 border border-gray-200">
-            <RuleBasedUserManagement />
+            <Suspense fallback={<LazyLoadingFallback />}>
+              <RuleBasedUserManagement />
+            </Suspense>
           </div>
         </div>
       )}
 
       {activeTab === "loyalty" && (
         <div>
-          <CustomerLoyalty />
+          <Suspense fallback={<LazyLoadingFallback />}>
+            <CustomerLoyalty />
+          </Suspense>
         </div>
       )}
 
       {activeTab === "coupons" && (
         <div>
-          <CouponManagement />
+          <Suspense fallback={<LazyLoadingFallback />}>
+            <CouponManagement />
+          </Suspense>
         </div>
       )}
 

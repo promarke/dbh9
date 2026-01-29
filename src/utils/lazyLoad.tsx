@@ -57,34 +57,18 @@ export function preloadComponent<P extends object>(
 }
 
 /**
- * Create a route-based lazy loaded component
+ * Create a route-based lazy loaded component (for reference only)
  */
-// Pre-defined lazy route components to avoid dynamic import issues
-export const LazyRoutes: Record<string, ComponentType<any>> = {
-  Dashboard: lazy(() => import("../components/Dashboard").then(m => ({ default: m.Dashboard }))),
-  POS: lazy(() => import("../components/POS").then(m => ({ default: m.POS }))),
-  Inventory: lazy(() => import("../components/Inventory").then(m => ({ default: m.Inventory }))),
-  Sales: lazy(() => import("../components/Sales").then(m => ({ default: m.Sales }))),
-  Customers: lazy(() => import("../components/Customers").then(m => ({ default: m.Customers }))),
-  Reports: lazy(() => import("../components/Reports").then(m => ({ default: m.Reports }))),
-  Settings: lazy(() => import("../components/Settings").then(m => ({ default: m.Settings }))),
-  Categories: lazy(() => import("../components/Categories").then(m => ({ default: m.Categories }))),
-  EmployeeManagement: lazy(() => import("../components/EmployeeManagement").then(m => ({ default: m.EmployeeManagement }))),
-  DiscountManagement: lazy(() => import("../components/DiscountManagement").then(m => ({ default: m.DiscountManagement }))),
-  BarcodeManager: lazy(() => import("../components/BarcodeManager").then(m => ({ default: m.BarcodeManager }))),
-  WhatsAppOrders: lazy(() => import("../components/WhatsAppOrders").then(m => ({ default: m.WhatsAppOrders }))),
-  OnlineStore: lazy(() => import("../components/OnlineStore").then(m => ({ default: m.OnlineStore }))),
-  Suppliers: lazy(() => import("../components/Suppliers").then(m => ({ default: m.Suppliers }))),
-  PurchaseReceiving: lazy(() => import("../components/PurchaseReceiving").then(m => ({ default: m.PurchaseReceiving }))),
-  EnhancedPOS: lazy(() => import("../components/EnhancedPOS").then(m => ({ default: m.EnhancedPOS }))),
-};
-
 export function createLazyRoute<P extends object>(
   componentName: string
 ): ComponentType<P> {
-  const Component = LazyRoutes[componentName] || LazyRoutes.Dashboard;
-  (Component as any).displayName = `Lazy(${componentName})`;
-  return Component;
+  // Note: Lazy components should be created at module level in App.tsx
+  // to avoid React hook issues. This function is kept for compatibility.
+  return React.lazy(() => 
+    import(`../components/${componentName}`).catch(() => 
+      ({ default: () => <div>Component not found: {componentName}</div> })
+    )
+  ) as ComponentType<P>;
 }
 
 /**
