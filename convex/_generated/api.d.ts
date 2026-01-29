@@ -18,6 +18,7 @@ import type * as auth from "../auth.js";
 import type * as backup from "../backup.js";
 import type * as branches from "../branches.js";
 import type * as categories from "../categories.js";
+import type * as constants from "../constants.js";
 import type * as coupons from "../coupons.js";
 import type * as customers from "../customers.js";
 import type * as dashboard from "../dashboard.js";
@@ -35,6 +36,7 @@ import type * as router from "../router.js";
 import type * as sales from "../sales.js";
 import type * as settings from "../settings.js";
 import type * as userRules from "../userRules.js";
+import type * as utils from "../utils.js";
 import type * as whatsappOrders from "../whatsappOrders.js";
 import type * as wishlist from "../wishlist.js";
 
@@ -52,6 +54,7 @@ declare const fullApi: ApiFromModules<{
   backup: typeof backup;
   branches: typeof branches;
   categories: typeof categories;
+  constants: typeof constants;
   coupons: typeof coupons;
   customers: typeof customers;
   dashboard: typeof dashboard;
@@ -69,6 +72,7 @@ declare const fullApi: ApiFromModules<{
   sales: typeof sales;
   settings: typeof settings;
   userRules: typeof userRules;
+  utils: typeof utils;
   whatsappOrders: typeof whatsappOrders;
   wishlist: typeof wishlist;
 }>;
