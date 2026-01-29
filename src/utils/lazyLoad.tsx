@@ -1,4 +1,4 @@
-import React, { Suspense, lazy, ComponentType, ReactNode } from "react";
+import React, { Suspense, ComponentType, ReactNode } from "react";
 
 interface LazyComponentProps {
   fallback?: ReactNode;
@@ -57,18 +57,20 @@ export function preloadComponent<P extends object>(
 }
 
 /**
- * Create a route-based lazy loaded component (for reference only)
+ * Create a route-based lazy loaded component
  */
 export function createLazyRoute<P extends object>(
-  componentName: string
+  importPath: string,
+  displayName: string
 ): ComponentType<P> {
-  // Note: Lazy components should be created at module level in App.tsx
-  // to avoid React hook issues. This function is kept for compatibility.
-  return React.lazy(() => 
-    import(`../components/${componentName}`).catch(() => 
-      ({ default: () => <div>Component not found: {componentName}</div> })
-    )
-  ) as ComponentType<P>;
+  const Component = React.lazy(() =>
+    import(`${importPath}`).then((module) => ({
+      default: module.default || module[displayName],
+    }))
+  );
+
+  (Component as any).displayName = `Lazy(${displayName})`;
+  return Component;
 }
 
 /**

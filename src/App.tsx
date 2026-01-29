@@ -6,9 +6,8 @@ import { SignOutButton } from "./SignOutButton";
 import { Dashboard } from "./components/Dashboard";
 import { LazyLoadingFallback, preloadComponents } from "./utils/lazyLoad";
 import { registerServiceWorkerCacheHandlers } from "./utils/cacheService";
-import { trackRouteChange } from "./utils/performanceMonitoring";
 
-// Lazy load heavy components - ALL 19 pages for instant loading
+// Lazy load heavy components
 const Inventory = lazy(() => import("./components/Inventory").then(m => ({ default: m.Inventory })));
 const POS = lazy(() => import("./components/POS").then(m => ({ default: m.POS })));
 const EnhancedPOS = lazy(() => import("./components/EnhancedPOS").then(m => ({ default: m.EnhancedPOS })));
@@ -23,24 +22,11 @@ const Categories = lazy(() => import("./components/Categories").then(m => ({ def
 const EmployeeManagement = lazy(() => import("./components/EmployeeManagement").then(m => ({ default: m.EmployeeManagement })));
 const DiscountManagement = lazy(() => import("./components/DiscountManagement").then(m => ({ default: m.DiscountManagement })));
 const WhatsAppOrders = lazy(() => import("./components/WhatsAppOrders").then(m => ({ default: m.WhatsAppOrders })));
-const OnlineStore = lazy(() => import("./components/OnlineStore"));
-const CouponManagement = lazy(() => import("./components/CouponManagement").then(m => ({ default: m.CouponManagement })));
-const CustomerLoyalty = lazy(() => import("./components/CustomerLoyalty").then(m => ({ default: m.CustomerLoyalty })));
-const BranchManagement = lazy(() => import("./components/BranchManagement").then(m => ({ default: m.BranchManagement })));
-const RuleBasedUserManagement = lazy(() => import("./components/RuleBasedUserManagement").then(m => ({ default: m.RuleBasedUserManagement })));
+const OnlineStore = lazy(() => import("./components/OnlineStore").then(m => ({ default: m.OnlineStore })));
 
 export default function App() {
   const [activeTab, setActiveTab] = useState("dashboard");
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  
-  // Track route changes for performance monitoring
-  useEffect(() => {
-    const startTime = performance.now();
-    return () => {
-      const duration = performance.now() - startTime;
-      trackRouteChange(duration);
-    };
-  }, [activeTab]);
   
   // Initialize Service Worker and caching
   useEffect(() => {
@@ -59,37 +45,18 @@ export default function App() {
     // Register cache handlers
     registerServiceWorkerCacheHandlers();
 
-    // Preload ALL 19 components immediately for native app speed
+    // Preload main components for faster navigation
     const preloadList = [
-      // Primary: Most frequently used pages
       () => import("./components/POS"),
       () => import("./components/Inventory"),
       () => import("./components/Sales"),
       () => import("./components/Reports"),
-      // Secondary: Common administrative pages
-      () => import("./components/Customers"),
-      () => import("./components/Categories"),
-      () => import("./components/EmployeeManagement"),
-      () => import("./components/DiscountManagement"),
-      () => import("./components/BarcodeManager"),
-      // Tertiary: Secondary features
-      () => import("./components/WhatsAppOrders"),
-      () => import("./components/OnlineStore"),
-      () => import("./components/Settings"),
-      () => import("./components/Suppliers"),
-      () => import("./components/PurchaseReceiving"),
-      () => import("./components/EnhancedPOS"),
-      // Bonus: Additional features
-      () => import("./components/CouponManagement"),
-      () => import("./components/CustomerLoyalty"),
-      () => import("./components/BranchManagement"),
-      () => import("./components/RuleBasedUserManagement"),
     ];
 
     // Delay preloading to avoid blocking initial render
     const timer = setTimeout(() => {
       preloadComponents(preloadList).catch(console.error);
-    }, 1500);
+    }, 2000);
 
     return () => clearTimeout(timer);
   }, []);

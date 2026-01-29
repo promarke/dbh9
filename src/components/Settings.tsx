@@ -1,15 +1,12 @@
-import { useState, useEffect, lazy, Suspense } from "react";
+import { useState, useEffect } from "react";
 import { useQuery, useMutation } from "convex/react";
 import { api } from "../../convex/_generated/api";
 import { toast } from "sonner";
 import { PrintTest } from "./PrintTest";
-import { LazyLoadingFallback } from "../utils/lazyLoad";
-
-// Lazy load sub-components to avoid React context issues
-const BranchManagement = lazy(() => import("./BranchManagement").then(m => ({ default: m.BranchManagement })));
-const RuleBasedUserManagement = lazy(() => import("./RuleBasedUserManagement").then(m => ({ default: m.RuleBasedUserManagement })));
-const CustomerLoyalty = lazy(() => import("./CustomerLoyalty"));
-const CouponManagement = lazy(() => import("./CouponManagement"));
+import { BranchManagement } from "./BranchManagement";
+import { RuleBasedUserManagement } from "./RuleBasedUserManagement";
+import CustomerLoyalty from "./CustomerLoyalty";
+import CouponManagement from "./CouponManagement";
 
 export function Settings() {
   const [activeTab, setActiveTab] = useState("general");
@@ -375,20 +372,6 @@ export function Settings() {
       setIsResetting(false);
     }
   };
-
-  // Show loading state
-  if (!storeSettings) {
-    return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="text-center">
-          <div className="inline-flex items-center justify-center w-16 h-16 mb-4 bg-blue-100 rounded-full">
-            <div className="w-12 h-12 border-4 border-blue-200 border-t-blue-600 rounded-full animate-spin"></div>
-          </div>
-          <p className="text-gray-600 font-medium">লোডিং হচ্ছে...</p>
-        </div>
-      </div>
-    );
-  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-50">
@@ -1017,34 +1000,26 @@ export function Settings() {
       )}
 
       {activeTab === "branches" && (
-        <Suspense fallback={<LazyLoadingFallback />}>
-          <BranchManagement />
-        </Suspense>
+        <BranchManagement />
       )}
 
       {activeTab === "userRules" && (
         <div className="space-y-4 sm:space-y-6">
           <div className="bg-white rounded-lg shadow p-4 sm:p-6 border border-gray-200">
-            <Suspense fallback={<LazyLoadingFallback />}>
-              <RuleBasedUserManagement />
-            </Suspense>
+            <RuleBasedUserManagement />
           </div>
         </div>
       )}
 
       {activeTab === "loyalty" && (
         <div>
-          <Suspense fallback={<LazyLoadingFallback />}>
-            <CustomerLoyalty />
-          </Suspense>
+          <CustomerLoyalty />
         </div>
       )}
 
       {activeTab === "coupons" && (
         <div>
-          <Suspense fallback={<LazyLoadingFallback />}>
-            <CouponManagement />
-          </Suspense>
+          <CouponManagement />
         </div>
       )}
 
