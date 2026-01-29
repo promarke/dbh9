@@ -381,8 +381,8 @@ export default function Customers() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center space-y-2 sm:space-y-0">
         <div>
-          <h2 className="text-xl sm:text-2xl font-bold text-gray-900">👥 Customer Management</h2>
-          <p className="text-sm text-gray-600 mt-1">
+          <h2 className="text-xl sm:text-2xl font-bold text-white">👥 Customer Management</h2>
+          <p className="text-sm text-white mt-1">
             Manage your customer relationships • {customers.length} customers
           </p>
         </div>

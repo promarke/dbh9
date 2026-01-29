@@ -43,7 +43,7 @@ export default function Sales() {
   return (
     <div className="space-y-4 sm:space-y-6 px-2 sm:px-0">
       <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center space-y-2 sm:space-y-0">
-        <h2 className="text-xl sm:text-2xl font-bold text-gray-900">Sales History</h2>
+        <h2 className="text-xl sm:text-2xl font-bold text-white">Sales History</h2>
         <div className="text-sm text-gray-500">
           Total Sales: {sales.length}
         </div>

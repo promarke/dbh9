@@ -142,8 +142,8 @@ export default function Reports() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center space-y-2 sm:space-y-0">
         <div>
-          <h2 className="text-xl sm:text-2xl font-bold text-gray-900">📊 Reports & Analytics</h2>
-          <p className="text-sm text-gray-600 mt-1">Track sales, inventory, and performance metrics</p>
+          <h2 className="text-xl sm:text-2xl font-bold text-white">📊 Reports & Analytics</h2>
+          <p className="text-sm text-white mt-1">Track sales, inventory, and performance metrics</p>
         </div>
         <button
           onClick={exportToCSV}
