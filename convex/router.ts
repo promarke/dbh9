@@ -6,7 +6,7 @@ const http = httpRouter();
 http.route({
   path: "/health",
   method: "GET",
-  handler: async () => {
+  handler: async (ctx) => {
     return new Response(
       JSON.stringify({
         status: "healthy",
