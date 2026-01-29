@@ -114,7 +114,9 @@ export const create = mutation({
       totalOrders: 0,
       referralCode: `${args.name.trim().replace(/\s+/g, '').toUpperCase()}-${customerId.substring(0, 6).toUpperCase()}`,
       membershipDate: Date.now(),
-      createdAt: Date.now(),
+      lastActivityDate: Date.now(),
+      referredCustomers: [],
+      isActive: true,
     });
 
     return customerId;
