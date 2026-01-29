@@ -26,6 +26,19 @@ export default function Settings() {
   const [logoSize, setLogoSize] = useState(120);
   const [storeTitle, setStoreTitle] = useState("DUBAI BORKA HOUSE");
   const [tagline, setTagline] = useState("");
+  const [printSettings, setPrintSettings] = useState({
+    printerType: "pos",
+    stickerWidth: 1.5,
+    stickerHeight: 1.0,
+    gapBetweenStickers: 10,
+    fontSize: 8,
+    includePrice: true,
+    includeName: true,
+    includeSize: false,
+    includeMadeBy: true,
+    stickersPerRow: 2,
+    paperWidth: 4,
+  });
   const [isSavingLogo, setIsSavingLogo] = useState(false);
 
   // Fetch current settings
@@ -38,6 +51,7 @@ export default function Settings() {
     { id: "store", name: "Store Info", icon: "🏪" },
     { id: "loyalty", name: "Loyalty & Rewards", icon: "🎁" },
     { id: "coupons", name: "Coupons", icon: "🎟️" },
+    { id: "barcode", name: "Barcode Settings", icon: "🏷️" },
     { id: "print", name: "Print Test", icon: "🖨️" },
     { id: "backup", name: "Backup & Restore", icon: "💾" },
     { id: "users", name: "User Management", icon: "👥" },
@@ -58,6 +72,23 @@ export default function Settings() {
       setLogoPreview(storeSettings.logo || null);
     }
   }, [storeSettings]);
+
+  // Load print settings from localStorage
+  useEffect(() => {
+    const savedPrintSettings = localStorage.getItem("printSettings");
+    if (savedPrintSettings) {
+      try {
+        setPrintSettings(JSON.parse(savedPrintSettings));
+      } catch (error) {
+        console.error("Error loading print settings:", error);
+      }
+    }
+  }, []);
+
+  // Save print settings to localStorage whenever they change
+  useEffect(() => {
+    localStorage.setItem("printSettings", JSON.stringify(printSettings));
+  }, [printSettings]);
 
   const handleLogoUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -697,6 +728,196 @@ export default function Settings() {
             <div className="mt-6 pt-6 border-t border-gray-200">
               <button className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 font-medium">
                 Save Store Information
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {activeTab === "barcode" && (
+        <div className="space-y-4 sm:space-y-6">
+          <div className="bg-white rounded-lg shadow p-4 sm:p-6 border border-gray-200">
+            <h3 className="text-lg sm:text-xl font-semibold text-gray-900 mb-6">🏷️ Barcode Settings</h3>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {/* Printer Configuration */}
+              <div>
+                <h4 className="font-medium text-gray-900 mb-3">Printer Configuration</h4>
+                <div className="space-y-3">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Printer Type</label>
+                    <select
+                      value={printSettings.printerType}
+                      onChange={(e) => setPrintSettings({...printSettings, printerType: e.target.value})}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
+                    >
+                      <option value="pos">POS Printer</option>
+                      <option value="regular">Regular Printer</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Sticker Width (inches)</label>
+                    <input
+                      type="number"
+                      min="0.5"
+                      max="4"
+                      step="0.1"
+                      value={printSettings.stickerWidth}
+                      onChange={(e) => setPrintSettings({...printSettings, stickerWidth: Number(e.target.value)})}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Sticker Height (inches)</label>
+                    <input
+                      type="number"
+                      min="0.5"
+                      max="2"
+                      step="0.1"
+                      value={printSettings.stickerHeight}
+                      onChange={(e) => setPrintSettings({...printSettings, stickerHeight: Number(e.target.value)})}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Gap Between Stickers (pixels)</label>
+                    <input
+                      type="number"
+                      min="5"
+                      max="20"
+                      step="1"
+                      value={printSettings.gapBetweenStickers}
+                      onChange={(e) => setPrintSettings({...printSettings, gapBetweenStickers: Number(e.target.value)})}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Stickers Per Row</label>
+                    <select
+                      value={printSettings.stickersPerRow}
+                      onChange={(e) => setPrintSettings({...printSettings, stickersPerRow: Number(e.target.value)})}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
+                    >
+                      <option value={1}>1</option>
+                      <option value={2}>2</option>
+                      <option value={3}>3</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Font Size (px)</label>
+                    <input
+                      type="number"
+                      min="6"
+                      max="16"
+                      value={printSettings.fontSize}
+                      onChange={(e) => setPrintSettings({...printSettings, fontSize: Number(e.target.value)})}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Label Content & Preview */}
+              <div>
+                <h4 className="font-medium text-gray-900 mb-3">Label Content</h4>
+                <div className="space-y-3 mb-4">
+                  <label className="flex items-center">
+                    <input
+                      type="checkbox"
+                      checked={printSettings.includeName}
+                      onChange={(e) => setPrintSettings({...printSettings, includeName: e.target.checked})}
+                      className="h-4 w-4 text-purple-600 rounded"
+                    />
+                    <span className="ml-2 text-sm text-gray-700">Include Product Name</span>
+                  </label>
+
+                  <label className="flex items-center">
+                    <input
+                      type="checkbox"
+                      checked={printSettings.includePrice}
+                      onChange={(e) => setPrintSettings({...printSettings, includePrice: e.target.checked})}
+                      className="h-4 w-4 text-purple-600 rounded"
+                    />
+                    <span className="ml-2 text-sm text-gray-700">Include Price</span>
+                  </label>
+
+                  <label className="flex items-center">
+                    <input
+                      type="checkbox"
+                      checked={printSettings.includeSize}
+                      onChange={(e) => setPrintSettings({...printSettings, includeSize: e.target.checked})}
+                      className="h-4 w-4 text-purple-600 rounded"
+                    />
+                    <span className="ml-2 text-sm text-gray-700">Include Size</span>
+                  </label>
+
+                  <label className="flex items-center">
+                    <input
+                      type="checkbox"
+                      checked={printSettings.includeMadeBy}
+                      onChange={(e) => setPrintSettings({...printSettings, includeMadeBy: e.target.checked})}
+                      className="h-4 w-4 text-purple-600 rounded"
+                    />
+                    <span className="ml-2 text-sm text-gray-700">Include Made By</span>
+                  </label>
+                </div>
+
+                <h4 className="font-medium text-gray-900 mb-3">Sticker Preview</h4>
+                <div className="border border-gray-300 rounded-lg p-4 bg-gray-50">
+                  <div 
+                    className="border border-gray-400 bg-white p-2 text-center flex flex-col mx-auto"
+                    style={{
+                      width: `${printSettings.stickerWidth * 60}px`,
+                      height: `${printSettings.stickerHeight * 60}px`,
+                      fontSize: `${printSettings.fontSize}px`,
+                      fontFamily: 'Arial, Helvetica, sans-serif'
+                    }}
+                  >
+                    <div className="font-bold text-xs" style={{ fontSize: `${printSettings.fontSize}px` }}>
+                      DUBAI BORKA HOUSE
+                    </div>
+                    {printSettings.includeName && (
+                      <div className="truncate" style={{ fontSize: '10px', margin: '2px 0' }}>
+                        Sample Abaya
+                      </div>
+                    )}
+                    {printSettings.includePrice && (
+                      <div className="font-bold" style={{ fontSize: `${printSettings.fontSize + 1}px`, margin: '2px 0' }}>
+                        ৳2,500
+                      </div>
+                    )}
+                    <div className="my-1">
+                      <div className="bg-black h-6 w-full mb-1"></div>
+                    </div>
+                    {printSettings.includeSize && (
+                      <div style={{ fontSize: `${printSettings.fontSize - 3}px`, margin: '1px 0' }}>M,L,XL</div>
+                    )}
+                    <div className="flex justify-end w-full mt-auto">
+                      {printSettings.includeMadeBy && (
+                        <div className="text-gray-600 text-right" style={{ fontSize: '10px' }}>
+                          Dubai
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div className="mt-6 pt-6 border-t border-gray-200">
+              <button 
+                onClick={() => {
+                  localStorage.setItem("printSettings", JSON.stringify(printSettings));
+                  toast.success("Barcode settings saved successfully!");
+                }}
+                className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 font-medium"
+              >
+                ✅ Save Settings
               </button>
             </div>
           </div>

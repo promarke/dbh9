@@ -1,4 +1,4 @@
-import { useState, useRef, useMemo, useCallback } from "react";
+import { useState, useRef, useMemo, useCallback, useEffect } from "react";
 import { useQuery, useMutation } from "convex/react";
 import { api } from "../../convex/_generated/api";
 import { toast } from "sonner";
@@ -23,6 +23,18 @@ export default function BarcodeManager() {
     stickersPerRow: 2,
     paperWidth: 4, // inches for POS printer
   });
+
+  // Load print settings from localStorage on mount
+  useEffect(() => {
+    const savedPrintSettings = localStorage.getItem("printSettings");
+    if (savedPrintSettings) {
+      try {
+        setPrintSettings(JSON.parse(savedPrintSettings));
+      } catch (error) {
+        console.error("Error loading print settings:", error);
+      }
+    }
+  }, []);
 
   const products = useQuery(api.products.list, { 
     categoryId: selectedCategory,
