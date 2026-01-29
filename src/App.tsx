@@ -1,9 +1,11 @@
-import { useState, lazy, Suspense } from "react";
+import { useState, lazy, Suspense, useEffect } from "react";
 import { Authenticated, Unauthenticated, useQuery } from "convex/react";
 import { api } from "../convex/_generated/api";
 import { LoginWrapper } from "./components/LoginWrapper";
 import { SignOutButton } from "./SignOutButton";
 import { Dashboard } from "./components/Dashboard";
+import { LazyLoadingFallback, preloadComponents } from "./utils/lazyLoad";
+import { registerServiceWorkerCacheHandlers } from "./utils/cacheService";
 
 // Lazy load heavy components
 const Inventory = lazy(() => import("./components/Inventory").then(m => ({ default: m.Inventory })));
@@ -22,16 +24,42 @@ const DiscountManagement = lazy(() => import("./components/DiscountManagement").
 const WhatsAppOrders = lazy(() => import("./components/WhatsAppOrders").then(m => ({ default: m.WhatsAppOrders })));
 const OnlineStore = lazy(() => import("./components/OnlineStore").then(m => ({ default: m.OnlineStore })));
 
-// Loading fallback component
-const LoadingSpinner = () => (
-  <div className="flex items-center justify-center h-96">
-    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600"></div>
-  </div>
-);
-
 export default function App() {
   const [activeTab, setActiveTab] = useState("dashboard");
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  
+  // Initialize Service Worker and caching
+  useEffect(() => {
+    // Register service worker
+    if ("serviceWorker" in navigator) {
+      navigator.serviceWorker
+        .register("/sw.js")
+        .then((registration) => {
+          console.log("✅ Service Worker registered successfully");
+        })
+        .catch((error) => {
+          console.log("Service Worker registration failed:", error);
+        });
+    }
+
+    // Register cache handlers
+    registerServiceWorkerCacheHandlers();
+
+    // Preload main components for faster navigation
+    const preloadList = [
+      () => import("./components/POS"),
+      () => import("./components/Inventory"),
+      () => import("./components/Sales"),
+      () => import("./components/Reports"),
+    ];
+
+    // Delay preloading to avoid blocking initial render
+    const timer = setTimeout(() => {
+      preloadComponents(preloadList).catch(console.error);
+    }, 2000);
+
+    return () => clearTimeout(timer);
+  }, []);
   
   // Fetch store settings
   const storeSettings = useQuery(api.settings.get);
@@ -83,35 +111,35 @@ export default function App() {
       case "dashboard":
         return <Dashboard />;
       case "inventory":
-        return <Suspense fallback={<LoadingSpinner />}><Inventory /></Suspense>;
+        return <Suspense fallback={<LazyLoadingFallback />}><Inventory /></Suspense>;
       case "categories":
-        return <Suspense fallback={<LoadingSpinner />}><Categories /></Suspense>;
+        return <Suspense fallback={<LazyLoadingFallback />}><Categories /></Suspense>;
       case "pos":
-        return <Suspense fallback={<LoadingSpinner />}><POS /></Suspense>;
+        return <Suspense fallback={<LazyLoadingFallback />}><POS /></Suspense>;
       case "enhanced-pos":
-        return <Suspense fallback={<LoadingSpinner />}><EnhancedPOS /></Suspense>;
+        return <Suspense fallback={<LazyLoadingFallback />}><EnhancedPOS /></Suspense>;
       case "sales":
-        return <Suspense fallback={<LoadingSpinner />}><Sales /></Suspense>;
+        return <Suspense fallback={<LazyLoadingFallback />}><Sales /></Suspense>;
       case "customers":
-        return <Suspense fallback={<LoadingSpinner />}><Customers /></Suspense>;
+        return <Suspense fallback={<LazyLoadingFallback />}><Customers /></Suspense>;
       case "employees":
-        return <Suspense fallback={<LoadingSpinner />}><EmployeeManagement /></Suspense>;
+        return <Suspense fallback={<LazyLoadingFallback />}><EmployeeManagement /></Suspense>;
       case "discounts":
-        return <Suspense fallback={<LoadingSpinner />}><DiscountManagement /></Suspense>;
+        return <Suspense fallback={<LazyLoadingFallback />}><DiscountManagement /></Suspense>;
       case "whatsapp":
-        return <Suspense fallback={<LoadingSpinner />}><WhatsAppOrders /></Suspense>;
+        return <Suspense fallback={<LazyLoadingFallback />}><WhatsAppOrders /></Suspense>;
       case "online":
-        return <Suspense fallback={<LoadingSpinner />}><OnlineStore /></Suspense>;
+        return <Suspense fallback={<LazyLoadingFallback />}><OnlineStore /></Suspense>;
       case "suppliers":
-        return <Suspense fallback={<LoadingSpinner />}><Suppliers /></Suspense>;
+        return <Suspense fallback={<LazyLoadingFallback />}><Suppliers /></Suspense>;
       case "purchases":
-        return <Suspense fallback={<LoadingSpinner />}><PurchaseReceiving /></Suspense>;
+        return <Suspense fallback={<LazyLoadingFallback />}><PurchaseReceiving /></Suspense>;
       case "barcodes":
-        return <Suspense fallback={<LoadingSpinner />}><BarcodeManager /></Suspense>;
+        return <Suspense fallback={<LazyLoadingFallback />}><BarcodeManager /></Suspense>;
       case "reports":
-        return <Suspense fallback={<LoadingSpinner />}><Reports /></Suspense>;
+        return <Suspense fallback={<LazyLoadingFallback />}><Reports /></Suspense>;
       case "settings":
-        return <Suspense fallback={<LoadingSpinner />}><Settings /></Suspense>;
+        return <Suspense fallback={<LazyLoadingFallback />}><Settings /></Suspense>;
       default:
         return <Dashboard />;
     }
