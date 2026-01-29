@@ -23,52 +23,69 @@ export function Dashboard() {
     );
   }
 
-  // Calculate stats
-  const totalProducts = products.length;
-  const totalAbayas = products.reduce((sum, product) => sum + product.currentStock, 0);
-  const lowStockProducts = products.filter(p => p.currentStock <= p.minStockLevel);
-  const totalValue = products.reduce((sum, product) => 
-    sum + (product.sellingPrice * product.currentStock), 0
-  );
+  // Safe data access with fallbacks
+  const safeProducts = Array.isArray(products) ? products : [];
+  const safeSales = Array.isArray(sales) ? sales : [];
+  const safeCategories = Array.isArray(categories) ? categories : [];
+  const safeCustomers = Array.isArray(customers) ? customers : [];
 
-  // Recent sales (last 7 days)
-  const sevenDaysAgo = Date.now() - (7 * 24 * 60 * 60 * 1000);
-  const recentSales = sales.filter(sale => sale._creationTime >= sevenDaysAgo);
-  const totalRecentSales = recentSales.reduce((sum, sale) => sum + sale.total, 0);
+  try {
+    // Calculate stats with safe access
+    const totalProducts = safeProducts.length;
+    const totalAbayas = safeProducts.reduce((sum, product) => {
+      const stock = typeof product?.currentStock === 'number' ? product.currentStock : 0;
+      return sum + stock;
+    }, 0);
+    const lowStockProducts = safeProducts.filter(p => 
+      typeof p?.currentStock === 'number' && typeof p?.minStockLevel === 'number' && p.currentStock <= p.minStockLevel
+    );
+    const totalValue = safeProducts.reduce((sum, product) => {
+      const price = typeof product?.sellingPrice === 'number' ? product.sellingPrice : 0;
+      const stock = typeof product?.currentStock === 'number' ? product.currentStock : 0;
+      return sum + (price * stock);
+    }, 0);
 
-  // Today's sales
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-  const todaysSales = sales.filter(sale => sale._creationTime >= today.getTime());
-  const todayTotal = todaysSales.reduce((sum, sale) => sum + sale.total, 0);
+    // Recent sales (last 7 days)
+    const sevenDaysAgo = Date.now() - (7 * 24 * 60 * 60 * 1000);
+    const recentSales = safeSales.filter(sale => typeof sale?._creationTime === 'number' && sale._creationTime >= sevenDaysAgo);
+    const totalRecentSales = recentSales.reduce((sum, sale) => sum + (typeof sale?.total === 'number' ? sale.total : 0), 0);
 
-  // Stock alerts
-  const criticalStockProducts = products.filter(p => p.currentStock === 0);
-  const lowStockAlerts = products.filter(p => p.currentStock > 0 && p.currentStock <= p.minStockLevel);
-  
-  // Mobile banking transactions (from recent sales)
-  const mobileBankingStats = {
-    bkash: recentSales.filter(s => s.paymentMethod === 'bkash').reduce((sum, s) => sum + s.total, 0),
-    nagad: recentSales.filter(s => s.paymentMethod === 'nagad').reduce((sum, s) => sum + s.total, 0),
-    rocket: recentSales.filter(s => s.paymentMethod === 'rocket').reduce((sum, s) => sum + s.total, 0),
-  };
-  // Top selling products (by quantity sold)
-  const productSales = new Map<string, { name: string; quantity: number; revenue: number }>();
-  
-  sales.forEach(sale => {
-    sale.items.forEach(item => {
-      const existing = productSales.get(item.productId) || { name: item.productName, quantity: 0, revenue: 0 };
-      existing.quantity += item.quantity;
-      existing.revenue += item.totalPrice;
-      productSales.set(item.productId, existing);
+    // Today's sales
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const todaysSales = safeSales.filter(sale => typeof sale?._creationTime === 'number' && sale._creationTime >= today.getTime());
+    const todayTotal = todaysSales.reduce((sum, sale) => sum + (typeof sale?.total === 'number' ? sale.total : 0), 0);
+
+    // Stock alerts
+    const criticalStockProducts = safeProducts.filter(p => typeof p?.currentStock === 'number' && p.currentStock === 0);
+    const lowStockAlerts = safeProducts.filter(p => typeof p?.currentStock === 'number' && typeof p?.minStockLevel === 'number' && p.currentStock > 0 && p.currentStock <= p.minStockLevel);
+    
+    // Top selling products (by quantity sold)
+    const productSales = new Map<string, { name: string; quantity: number; revenue: number }>();
+    
+    safeSales.forEach(sale => {
+      if (Array.isArray(sale?.items)) {
+        sale.items.forEach((item: any) => {
+          const productName = typeof item?.productName === 'string' ? item.productName : 'Unknown Product';
+          const quantity = typeof item?.quantity === 'number' ? item.quantity : 0;
+          const totalPrice = typeof item?.totalPrice === 'number' ? item.totalPrice : 0;
+          const productId = typeof item?.productId === 'string' ? item.productId : '';
+          
+          if (productId) {
+            const existing = productSales.get(productId) || { name: productName, quantity: 0, revenue: 0 };
+            existing.quantity += quantity;
+            existing.revenue += totalPrice;
+            productSales.set(productId, existing);
+          }
+        });
+      }
     });
-  });
 
-  const topProducts = Array.from(productSales.values())
-    .sort((a, b) => b.quantity - a.quantity)
-    .slice(0, 5);
+    const topProducts = Array.from(productSales.values())
+      .sort((a, b) => b.quantity - a.quantity)
+      .slice(0, 5);
 
-  return (
+    return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-50">
       <div className="space-y-6 p-4 sm:p-6 max-w-7xl mx-auto">
         {/* Header with Logo and Title - iOS Style */}
@@ -395,6 +412,28 @@ export function Dashboard() {
           </div>
         </div>
       </div>
-    </div>
-  );
+    );
+  } catch (error) {
+    console.error("Dashboard error:", error);
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-50 flex items-center justify-center p-4">
+        <div className="text-center max-w-md">
+          <div className="inline-flex items-center justify-center w-16 h-16 bg-red-100 rounded-full mb-4">
+            <span className="text-3xl">⚠️</span>
+          </div>
+          <h2 className="text-xl font-bold text-gray-900 mb-2">Dashboard Error</h2>
+          <p className="text-gray-600 mb-4">ড্যাশবোর্ড লোড করতে সমস্যা হচ্ছে</p>
+          <p className="text-xs text-gray-500 bg-gray-100 p-3 rounded-lg">
+            {error instanceof Error ? error.message : 'Unknown error occurred'}
+          </p>
+          <button 
+            onClick={() => window.location.reload()}
+            className="mt-4 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition"
+          >
+            পুনরায় চেষ্টা করুন
+          </button>
+        </div>
+      </div>
+    );
+  }
 }
