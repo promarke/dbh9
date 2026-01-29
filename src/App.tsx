@@ -6,6 +6,7 @@ import { SignOutButton } from "./SignOutButton";
 import { Dashboard } from "./components/Dashboard";
 import { LazyLoadingFallback, preloadComponents } from "./utils/lazyLoad";
 import { registerServiceWorkerCacheHandlers } from "./utils/cacheService";
+import { trackRouteChange } from "./utils/performanceMonitoring";
 
 // Lazy load heavy components
 const Inventory = lazy(() => import("./components/Inventory").then(m => ({ default: m.Inventory })));
@@ -28,6 +29,15 @@ export default function App() {
   const [activeTab, setActiveTab] = useState("dashboard");
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   
+  // Track route changes for performance monitoring
+  useEffect(() => {
+    const startTime = performance.now();
+    return () => {
+      const duration = performance.now() - startTime;
+      trackRouteChange(duration);
+    };
+  }, [activeTab]);
+  
   // Initialize Service Worker and caching
   useEffect(() => {
     // Register service worker
@@ -45,18 +55,32 @@ export default function App() {
     // Register cache handlers
     registerServiceWorkerCacheHandlers();
 
-    // Preload main components for faster navigation
+    // Preload ALL components immediately for native app speed
     const preloadList = [
+      // Primary routes (most frequently used)
       () => import("./components/POS"),
       () => import("./components/Inventory"),
       () => import("./components/Sales"),
       () => import("./components/Reports"),
+      // Secondary routes
+      () => import("./components/Customers"),
+      () => import("./components/Categories"),
+      () => import("./components/EmployeeManagement"),
+      () => import("./components/DiscountManagement"),
+      // Tertiary routes
+      () => import("./components/WhatsAppOrders"),
+      () => import("./components/OnlineStore"),
+      () => import("./components/Settings"),
+      () => import("./components/BarcodeManager"),
+      () => import("./components/Suppliers"),
+      () => import("./components/PurchaseReceiving"),
+      () => import("./components/EnhancedPOS"),
     ];
 
     // Delay preloading to avoid blocking initial render
     const timer = setTimeout(() => {
       preloadComponents(preloadList).catch(console.error);
-    }, 2000);
+    }, 1500);
 
     return () => clearTimeout(timer);
   }, []);
