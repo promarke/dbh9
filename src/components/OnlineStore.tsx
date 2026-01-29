@@ -4,7 +4,7 @@ import { api } from "../../convex/_generated/api";
 import { toast } from "sonner";
 import type { Id } from "../../convex/_generated/dataModel";
 
-export function OnlineStore() {
+function OnlineStore() {
   const [activeTab, setActiveTab] = useState<"products" | "orders">("products");
   const [filterStatus, setFilterStatus] = useState<string>("all");
 
@@ -261,3 +261,5 @@ export function OnlineStore() {
     </div>
   );
 }
+
+export default OnlineStore;

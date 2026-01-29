@@ -23,7 +23,7 @@ const Categories = lazy(() => import("./components/Categories").then(m => ({ def
 const EmployeeManagement = lazy(() => import("./components/EmployeeManagement").then(m => ({ default: m.EmployeeManagement })));
 const DiscountManagement = lazy(() => import("./components/DiscountManagement").then(m => ({ default: m.DiscountManagement })));
 const WhatsAppOrders = lazy(() => import("./components/WhatsAppOrders").then(m => ({ default: m.WhatsAppOrders })));
-const OnlineStore = lazy(() => import("./components/OnlineStore").then(m => ({ default: m.OnlineStore })));
+const OnlineStore = lazy(() => import("./components/OnlineStore"));
 const CouponManagement = lazy(() => import("./components/CouponManagement").then(m => ({ default: m.CouponManagement })));
 const CustomerLoyalty = lazy(() => import("./components/CustomerLoyalty").then(m => ({ default: m.CustomerLoyalty })));
 const BranchManagement = lazy(() => import("./components/BranchManagement").then(m => ({ default: m.BranchManagement })));
