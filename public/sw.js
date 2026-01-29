@@ -1,12 +1,41 @@
 const CACHE_NAME = "dhb-v2";
 const ASSET_CACHE = "dhb-assets-v1";
 const API_CACHE = "dhb-api-v1";
+const OFFLINE_CACHE = "dhb-offline-v1";
 
 const urlsToCache = [
   "/",
   "/index.html",
   "/vite.svg",
 ];
+
+// Offline fallback page
+const OFFLINE_FALLBACK = new Response(
+  `<!DOCTYPE html>
+   <html>
+   <head>
+     <title>Dubai Borka House - Offline Mode</title>
+     <style>
+       body { font-family: system-ui; display: flex; align-items: center; justify-content: center; min-height: 100vh; margin: 0; background: #f8f9fa; }
+       .container { text-align: center; padding: 2rem; }
+       h1 { color: #333; }
+       p { color: #666; margin: 1rem 0; }
+       .badge { display: inline-block; background: #7c3aed; color: white; padding: 0.5rem 1rem; border-radius: 4px; margin-top: 1rem; }
+     </style>
+   </head>
+   <body>
+     <div class="container">
+       <h1>📴 Offline Mode</h1>
+       <p>You are currently offline</p>
+       <p>Your cached data is available and changes will sync when you're back online</p>
+       <div class="badge">✅ Local Storage Active</div>
+     </div>
+   </body>
+   </html>`,
+  {
+    headers: { "Content-Type": "text/html" },
+  }
+);
 
 // Cache expiration time (in milliseconds)
 const CACHE_EXPIRY = {
@@ -18,11 +47,17 @@ const CACHE_EXPIRY = {
 // Install event - cache files aggressively
 self.addEventListener("install", (event) => {
   event.waitUntil(
-    caches.open(CACHE_NAME).then((cache) => {
-      return cache.addAll(urlsToCache).catch(() => {
-        console.log("Initial cache failed, continuing...");
-      });
-    }).then(() => self.skipWaiting())
+    Promise.all([
+      caches.open(CACHE_NAME).then((cache) => {
+        return cache.addAll(urlsToCache).catch(() => {
+          console.log("Initial cache failed, continuing...");
+        });
+      }),
+      caches.open(OFFLINE_CACHE).then((cache) => {
+        // Cache offline fallback
+        return cache.put("/", OFFLINE_FALLBACK);
+      })
+    ]).then(() => self.skipWaiting())
   );
 });
 
@@ -48,6 +83,16 @@ self.addEventListener("fetch", (event) => {
             });
           }
           return response;
+        })
+        .catch(() => {
+          // Return cached response if offline
+          return caches.match(request).then((response) => {
+            return response || OFFLINE_FALLBACK;
+          });
+        })
+    );
+    return;
+  }
         })
         .catch(() => {
           return caches.match(request);

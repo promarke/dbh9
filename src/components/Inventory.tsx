@@ -698,6 +698,12 @@ export default function Inventory() {
 												<option value="AROWA">AROWA</option>
 												<option value="TICTOC">TICTOC</option>
 												<option value="PRINT">PRINT</option>
+                        <option value="BABLA">BABLA</option>
+                        <option value="LILEN">LILEN</option>
+                        <option value="KASMIRI">KASMIRI</option>
+                        <option value="FAKRU PRINT">FAKRU PRINT</option>
+                        <option value="KORIYAN SIMAR">KORIYAN SIMAR</option>
+                        <option value="JORI SHIPON">JORI SHIPON</option>
                       </select>
                     </div>
 

@@ -6,6 +6,7 @@ import { SignOutButton } from "./SignOutButton";
 import { Dashboard } from "./components/Dashboard";
 import { LazyLoadingFallback, preloadComponents } from "./utils/lazyLoad";
 import { registerServiceWorkerCacheHandlers } from "./utils/cacheService";
+import { useOfflineSync } from "./hooks/useOfflineSync";
 
 // Lazy load heavy components
 const Inventory = lazy(() => import("./components/Inventory"));
@@ -29,6 +30,9 @@ const StockManagement = lazy(() => import("./components/StockManagement"));
 export default function App() {
   const [activeTab, setActiveTab] = useState("dashboard");
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  
+  // Initialize offline sync
+  const { isOnline } = useOfflineSync();
   
   // Initialize Service Worker and caching
   useEffect(() => {
