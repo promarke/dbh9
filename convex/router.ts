@@ -1,4 +1,4 @@
-import { httpRouter } from "convex/server";
+import { httpRouter, type HttpRouterContext } from "convex/server";
 
 const http = httpRouter();
 
@@ -6,7 +6,7 @@ const http = httpRouter();
 http.route({
   path: "/health",
   method: "GET",
-  handler: async (ctx) => {
+  handler: async (ctx: HttpRouterContext): Promise<Response> => {
     return new Response(
       JSON.stringify({
         status: "healthy",
