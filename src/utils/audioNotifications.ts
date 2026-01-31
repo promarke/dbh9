@@ -58,58 +58,65 @@ interface NotificationSound {
   frequency: number; // Hz
   duration: number; // ms
   volume: number; // 0-1
+  pattern: 'single' | 'double' | 'triple' | 'ascending' | 'descending'; // Beep pattern
 }
 
 // Sound definitions with Web Audio API parameters
-const SOUND_DEFINITIONS: Record<NotificationSoundType, NotificationSound> = {
+export const SOUND_DEFINITIONS: Record<NotificationSoundType, NotificationSound> = {
   // ✅ Success Sounds
   sale_success: {
     type: 'sale_success',
     name: 'বিক্রয় সফল',
     description: 'নতুন বিক্রয় সম্পন্ন হয়েছে',
     frequency: 800,
-    duration: 300,
+    duration: 150,
     volume: 0.8,
+    pattern: 'double',
   },
   sale_complete: {
     type: 'sale_complete',
     name: 'বিক্রয় সম্পূর্ণ',
     description: 'বিক্রয় প্রক্রিয়া সম্পূর্ণ',
     frequency: 1000,
-    duration: 400,
-    volume: 0.9,
+    duration: 120,
+    volume: 0.85,
+    pattern: 'ascending',
   },
   refund_approved: {
     type: 'refund_approved',
     name: 'রিফান্ড অনুমোদিত',
     description: 'রিফান্ড অনুমোদিত হয়েছে',
     frequency: 900,
-    duration: 350,
+    duration: 140,
     volume: 0.8,
+    pattern: 'double',
   },
   payment_received: {
     type: 'payment_received',
     name: 'অর্থ প্রাপ্ত',
     description: 'পেমেন্ট সফলভাবে গৃহীত হয়েছে',
     frequency: 1200,
-    duration: 450,
+    duration: 160,
     volume: 0.9,
+    pattern: 'double',
   },
   order_confirmed: {
     type: 'order_confirmed',
     name: 'অর্ডার নিশ্চিত',
     description: 'অর্ডার নিশ্চিত করা হয়েছে',
     frequency: 1100,
-    duration: 300,
+    duration: 130,
     volume: 0.8,
+    pattern: 'single',
   },
   task_completed: {
     type: 'task_completed',
     name: 'কাজ সম্পূর্ণ',
     description: 'কাজ সম্পন্ন হয়েছে',
     frequency: 1300,
-    duration: 250,
+    duration: 120,
     volume: 0.7,
+    pattern: 'single',
   },
 
   // ⚠️ Warning Sounds
@@ -118,48 +125,54 @@ const SOUND_DEFINITIONS: Record<NotificationSoundType, NotificationSound> = {
     name: 'স্টক কম সতর্কতা',
     description: 'পণ্য স্টক কম হয়ে গেছে',
     frequency: 600,
-    duration: 500,
+    duration: 140,
     volume: 0.8,
+    pattern: 'double',
   },
   high_discount_alert: {
     type: 'high_discount_alert',
     name: 'উচ্চ ছাড় সতর্কতা',
     description: 'অত্যধিক ছাড় প্রদান করা হয়েছে',
     frequency: 650,
-    duration: 400,
+    duration: 130,
     volume: 0.75,
+    pattern: 'double',
   },
   price_mismatch: {
     type: 'price_mismatch',
     name: 'মূল্য অমিল',
     description: 'মূল্যে অমিল সনাক্ত করা হয়েছে',
     frequency: 700,
-    duration: 450,
+    duration: 140,
     volume: 0.8,
+    pattern: 'double',
   },
   inventory_alert: {
     type: 'inventory_alert',
     name: 'ইনভেন্টরি এলার্ট',
     description: 'ইনভেন্টরি সংক্রান্ত সমস্যা',
     frequency: 550,
-    duration: 600,
+    duration: 150,
     volume: 0.85,
+    pattern: 'triple',
   },
   expiry_approaching: {
     type: 'expiry_approaching',
     name: 'মেয়াদ শেষ হওয়ার কাছাকাছি',
     description: 'পণ্যের মেয়াদ শেষ হতে যাচ্ছে',
     frequency: 680,
-    duration: 500,
+    duration: 135,
     volume: 0.8,
+    pattern: 'double',
   },
   customer_limit_warning: {
     type: 'customer_limit_warning',
     name: 'গ্রাহক সীমা সতর্কতা',
     description: 'গ্রাহক ক্রেডিট সীমা অতিক্রম করতে যাচ্ছে',
     frequency: 720,
-    duration: 450,
+    duration: 140,
     volume: 0.8,
+    pattern: 'double',
   },
 
   // 🔴 Critical Sounds
@@ -168,48 +181,54 @@ const SOUND_DEFINITIONS: Record<NotificationSoundType, NotificationSound> = {
     name: 'পেমেন্ট ব্যর্থ',
     description: 'পেমেন্ট প্রক্রিয়া ব্যর্থ হয়েছে',
     frequency: 400,
-    duration: 800,
+    duration: 180,
     volume: 0.95,
+    pattern: 'triple',
   },
   system_error: {
     type: 'system_error',
     name: 'সিস্টেম ত্রুটি',
     description: 'সিস্টেমে গুরুতর ত্রুটি ঘটেছে',
     frequency: 350,
-    duration: 900,
+    duration: 200,
     volume: 1.0,
+    pattern: 'triple',
   },
   critical_inventory: {
     type: 'critical_inventory',
     name: 'সংকটপূর্ণ ইনভেন্টরি',
     description: 'ইনভেন্টরি গুরুতরভাবে কম',
     frequency: 300,
-    duration: 1000,
+    duration: 220,
     volume: 1.0,
+    pattern: 'triple',
   },
   transaction_error: {
     type: 'transaction_error',
     name: 'লেনদেন ত্রুটি',
     description: 'লেনদেনে ত্রুটি দেখা দিয়েছে',
     frequency: 380,
-    duration: 850,
+    duration: 190,
     volume: 0.95,
+    pattern: 'triple',
   },
   customer_credit_exceeded: {
     type: 'customer_credit_exceeded',
     name: 'গ্রাহক ক্রেডিট অতিক্রম',
     description: 'গ্রাহক ক্রেডিট সীমা অতিক্রম করেছে',
     frequency: 420,
-    duration: 800,
+    duration: 180,
     volume: 0.95,
+    pattern: 'triple',
   },
   invalid_transaction: {
     type: 'invalid_transaction',
     name: 'অবৈধ লেনদেন',
     description: 'অবৈধ লেনদেন সনাক্ত করা হয়েছে',
     frequency: 360,
-    duration: 750,
+    duration: 170,
     volume: 0.9,
+    pattern: 'double',
   },
 
   // 💼 Business Events
@@ -217,49 +236,55 @@ const SOUND_DEFINITIONS: Record<NotificationSoundType, NotificationSound> = {
     type: 'new_customer',
     name: 'নতুন গ্রাহক',
     description: 'নতুন গ্রাহক যুক্ত হয়েছেন',
-    frequency: 1400,
-    duration: 350,
+    frequency: 550,
+    duration: 150,
     volume: 0.85,
+    pattern: 'double',
   },
   large_order: {
     type: 'large_order',
     name: 'বড় অর্ডার',
     description: 'বড় পরিমাণের অর্ডার পাওয়া গেছে',
-    frequency: 1500,
-    duration: 400,
+    frequency: 580,
+    duration: 160,
     volume: 0.9,
+    pattern: 'ascending',
   },
   bulk_sale: {
     type: 'bulk_sale',
     name: 'বাল্ক বিক্রয়',
     description: 'বাল্ক পরিমাণে বিক্রয় হয়েছে',
-    frequency: 1600,
-    duration: 350,
+    frequency: 600,
+    duration: 150,
     volume: 0.9,
+    pattern: 'double',
   },
   vip_customer_purchase: {
     type: 'vip_customer_purchase',
     name: 'ভিআইপি গ্রাহক ক্রয়',
     description: 'ভিআইপি গ্রাহক ক্রয় করেছেন',
-    frequency: 1800,
-    duration: 500,
+    frequency: 620,
+    duration: 160,
     volume: 0.95,
+    pattern: 'ascending',
   },
   return_received: {
     type: 'return_received',
     name: 'পণ্য ফেরত আসা',
     description: 'পণ্য ফেরত আসা হয়েছে',
-    frequency: 800,
-    duration: 400,
+    frequency: 490,
+    duration: 140,
     volume: 0.8,
+    pattern: 'double',
   },
   supplier_delivery: {
     type: 'supplier_delivery',
     name: 'সরবরাহকারী ডেলিভারি',
     description: 'সরবরাহকারী থেকে পণ্য এসেছে',
-    frequency: 1100,
-    duration: 350,
+    frequency: 640,
+    duration: 150,
     volume: 0.85,
+    pattern: 'ascending',
   },
 
   // 📊 Analytics & Monitoring
@@ -267,49 +292,55 @@ const SOUND_DEFINITIONS: Record<NotificationSoundType, NotificationSound> = {
     type: 'daily_target_reached',
     name: 'দৈনিক লক্ষ্য অর্জন',
     description: 'দৈনিক বিক্রয় লক্ষ্য অর্জিত হয়েছে',
-    frequency: 1400,
-    duration: 600,
-    volume: 0.95,
+    frequency: 700,
+    duration: 150,
+    volume: 0.9,
+    pattern: 'ascending',
   },
   monthly_milestone: {
     type: 'monthly_milestone',
     name: 'মাসিক মাইলফলক',
     description: 'মাসিক মাইলফলক অর্জিত হয়েছে',
-    frequency: 2000,
-    duration: 700,
-    volume: 1.0,
+    frequency: 750,
+    duration: 160,
+    volume: 0.95,
+    pattern: 'ascending',
   },
   performance_boost: {
     type: 'performance_boost',
     name: 'পারফরম্যান্স বৃদ্ধি',
     description: 'ব্যবসায়িক পারফরম্যান্স উন্নত হয়েছে',
-    frequency: 1300,
-    duration: 450,
-    volume: 0.9,
+    frequency: 680,
+    duration: 140,
+    volume: 0.88,
+    pattern: 'ascending',
   },
   unusual_activity: {
     type: 'unusual_activity',
     name: 'অস্বাভাবিক কার্যকলাপ',
     description: 'অস্বাভাবিক কার্যকলাপ সনাক্ত করা হয়েছে',
-    frequency: 500,
-    duration: 600,
+    frequency: 420,
+    duration: 170,
     volume: 0.85,
+    pattern: 'triple',
   },
   system_check: {
     type: 'system_check',
     name: 'সিস্টেম পরীক্ষা',
     description: 'সিস্টেম পরীক্ষা সম্পন্ন',
-    frequency: 1000,
-    duration: 300,
-    volume: 0.7,
+    frequency: 660,
+    duration: 120,
+    volume: 0.75,
+    pattern: 'single',
   },
   backup_complete: {
     type: 'backup_complete',
     name: 'ব্যাকআপ সম্পূর্ণ',
     description: 'ডেটা ব্যাকআপ সম্পূর্ণ হয়েছে',
-    frequency: 1200,
-    duration: 400,
-    volume: 0.8,
+    frequency: 720,
+    duration: 130,
+    volume: 0.82,
+    pattern: 'double',
   },
 
   // 🎯 Additional
@@ -317,69 +348,109 @@ const SOUND_DEFINITIONS: Record<NotificationSoundType, NotificationSound> = {
     type: 'countdown_timer',
     name: 'কাউন্টডাউন টাইমার',
     description: 'সময় শেষ হয়ে যাচ্ছে',
-    frequency: 800,
-    duration: 200,
+    frequency: 600,
+    duration: 100,
     volume: 0.7,
+    pattern: 'single',
   },
   shift_change: {
     type: 'shift_change',
     name: 'শিফট পরিবর্তন',
     description: 'শিফট পরিবর্তনের সময় এসেছে',
-    frequency: 1000,
-    duration: 400,
+    frequency: 630,
+    duration: 120,
     volume: 0.85,
+    pattern: 'double',
   },
   employee_checkin: {
     type: 'employee_checkin',
     name: 'কর্মচারী চেক-ইন',
     description: 'কর্মচারী চেক-ইন হয়েছেন',
-    frequency: 1100,
-    duration: 300,
+    frequency: 660,
+    duration: 110,
     volume: 0.8,
+    pattern: 'single',
   },
   customer_alert: {
     type: 'customer_alert',
     name: 'গ্রাহক সতর্কতা',
     description: 'গ্রাহক সম্পর্কিত সতর্কতা',
-    frequency: 900,
-    duration: 400,
+    frequency: 550,
+    duration: 130,
     volume: 0.8,
+    pattern: 'double',
   },
   loyalty_earned: {
     type: 'loyalty_earned',
     name: 'লয়্যালটি অর্জন',
     description: 'গ্রাহক লয়্যালটি পয়েন্ট অর্জন করেছেন',
-    frequency: 1300,
-    duration: 350,
+    frequency: 700,
+    duration: 140,
     volume: 0.85,
+    pattern: 'ascending',
   },
 };
 
 /**
- * Audio notification service using Web Audio API
+ * Audio notification service using Web Audio API with advanced features
+ * Supports ADSR envelopes, beep patterns, frequency modulation, and mobile optimization
  */
 export class AudioNotificationService {
   private audioContext: AudioContext | null = null;
   private isEnabled = true;
+  private isMobileContext = false;
+  private masterGainNode: GainNode | null = null;
+  private beepGapMs = 150; // Gap between beeps in milliseconds
 
   constructor() {
     this.initAudioContext();
   }
 
+  /**
+   * Initialize audio context with mobile support
+   */
   private initAudioContext() {
     if (typeof window !== 'undefined' && !this.audioContext) {
-      const AudioContextClass = (window as any).AudioContext || (window as any).webkitAudioContext;
-      if (AudioContextClass) {
-        this.audioContext = new AudioContextClass();
+      try {
+        const AudioContextClass = (window as any).AudioContext || (window as any).webkitAudioContext;
+        if (AudioContextClass) {
+          this.audioContext = new AudioContextClass();
+          
+          // Create master gain node for volume control
+          if (this.audioContext) {
+            this.masterGainNode = this.audioContext.createGain();
+            this.masterGainNode.gain.value = 0.9;
+            this.masterGainNode.connect(this.audioContext.destination);
+
+            // Detect if mobile
+            this.isMobileContext = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+
+            // Resume audio context on user interaction for mobile
+            if (this.isMobileContext && this.audioContext.state === 'suspended') {
+              const resumeAudio = () => {
+                this.audioContext?.resume().then(() => {
+                  document.removeEventListener('click', resumeAudio);
+                  document.removeEventListener('touchstart', resumeAudio);
+                });
+              };
+              document.addEventListener('click', resumeAudio);
+              document.addEventListener('touchstart', resumeAudio);
+            }
+          }
+        }
+      } catch (error) {
+        console.warn('AudioContext initialization failed:', error);
       }
     }
   }
 
   /**
-   * Play a notification sound
+   * Play a notification sound with beep patterns
    */
   play(soundType: NotificationSoundType, repeat: boolean = false) {
-    if (!this.isEnabled || !this.audioContext) return;
+    if (!this.isEnabled || !this.audioContext || !this.masterGainNode) {
+      return;
+    }
 
     const sound = SOUND_DEFINITIONS[soundType];
     if (!sound) {
@@ -388,25 +459,38 @@ export class AudioNotificationService {
     }
 
     try {
-      const now = this.audioContext.currentTime;
-      const oscillator = this.audioContext.createOscillator();
-      const gainNode = this.audioContext.createGain();
+      // Resume audio context if suspended (mobile)
+      if (this.audioContext.state === 'suspended') {
+        this.audioContext.resume();
+      }
 
-      oscillator.connect(gainNode);
-      gainNode.connect(this.audioContext.destination);
-
-      oscillator.frequency.value = sound.frequency;
-      oscillator.type = 'sine';
-
-      gainNode.gain.setValueAtTime(sound.volume, now);
-      gainNode.gain.exponentialRampToValueAtTime(0.01, now + sound.duration / 1000);
-
-      oscillator.start(now);
-      oscillator.stop(now + sound.duration / 1000);
-
-      // Play additional beeps for warning and critical sounds
-      if (repeat && sound.frequency < 700) {
-        this.playBeep(soundType);
+      // Play beep pattern
+      const pattern = sound.pattern || 'single';
+      const beepDuration = sound.duration / 1000; // Convert to seconds
+      
+      switch (pattern) {
+        case 'single':
+          this.playBeep(sound.frequency, beepDuration, sound.volume);
+          break;
+        case 'double':
+          this.playBeep(sound.frequency, beepDuration, sound.volume);
+          setTimeout(() => this.playBeep(sound.frequency, beepDuration, sound.volume), this.beepGapMs);
+          break;
+        case 'triple':
+          this.playBeep(sound.frequency, beepDuration, sound.volume);
+          setTimeout(() => this.playBeep(sound.frequency, beepDuration, sound.volume), this.beepGapMs);
+          setTimeout(() => this.playBeep(sound.frequency, beepDuration, sound.volume), this.beepGapMs * 2);
+          break;
+        case 'ascending':
+          this.playBeep(sound.frequency, beepDuration, sound.volume);
+          setTimeout(() => this.playBeep(sound.frequency * 1.25, beepDuration, sound.volume), this.beepGapMs);
+          setTimeout(() => this.playBeep(sound.frequency * 1.5, beepDuration, sound.volume), this.beepGapMs * 2);
+          break;
+        case 'descending':
+          this.playBeep(sound.frequency * 1.5, beepDuration, sound.volume);
+          setTimeout(() => this.playBeep(sound.frequency * 1.25, beepDuration, sound.volume), this.beepGapMs);
+          setTimeout(() => this.playBeep(sound.frequency, beepDuration, sound.volume), this.beepGapMs * 2);
+          break;
       }
     } catch (error) {
       console.error('Error playing sound:', error);
@@ -414,17 +498,74 @@ export class AudioNotificationService {
   }
 
   /**
-   * Play a beep sequence for multiple alerts
+   * Play a single beep with ADSR envelope
+   * @param frequency - Frequency in Hz
+   * @param duration - Duration in seconds
+   * @param volume - Volume (0-1)
    */
-  private playBeep(soundType: NotificationSoundType) {
-    const sound = SOUND_DEFINITIONS[soundType];
-    const beepCount = sound.frequency < 400 ? 3 : sound.frequency < 600 ? 2 : 1;
+  private playBeep(frequency: number, duration: number, volume: number) {
+    if (!this.audioContext || !this.masterGainNode) return;
 
-    for (let i = 0; i < beepCount; i++) {
-      setTimeout(() => {
-        this.play(soundType, false);
-      }, (i + 1) * 600);
+    try {
+      const now = this.audioContext.currentTime;
+      
+      // Create nodes
+      const oscillator = this.audioContext.createOscillator();
+      const gainNode = this.audioContext.createGain();
+      const filter = this.audioContext.createBiquadFilter();
+      
+      // Setup oscillator
+      oscillator.type = 'sine';
+      oscillator.frequency.value = frequency;
+      
+      // Add slight frequency modulation for richness
+      oscillator.frequency.setValueAtTime(frequency * 0.98, now);
+      oscillator.frequency.linearRampToValueAtTime(frequency * 1.02, now + duration * 0.25);
+      oscillator.frequency.linearRampToValueAtTime(frequency, now + duration * 0.5);
+
+      // Setup filter (lowpass for warmth)
+      filter.type = 'lowpass';
+      filter.frequency.value = frequency * 2;
+      filter.Q.value = 1;
+
+      // ADSR Envelope
+      const attack = duration * 0.05; // 5% attack
+      const decay = duration * 0.15; // 15% decay
+      const sustain = duration * 0.75; // 75% sustain
+      const release = duration * 0.05; // 5% release
+
+      gainNode.gain.setValueAtTime(0, now);
+      gainNode.gain.linearRampToValueAtTime(volume, now + attack);
+      gainNode.gain.linearRampToValueAtTime(volume * 0.8, now + attack + decay);
+      gainNode.gain.setValueAtTime(volume * 0.8, now + attack + decay + sustain);
+      gainNode.gain.linearRampToValueAtTime(0, now + duration);
+
+      // Connect nodes: oscillator -> filter -> gain -> master
+      oscillator.connect(filter);
+      filter.connect(gainNode);
+      gainNode.connect(this.masterGainNode);
+
+      // Play
+      oscillator.start(now);
+      oscillator.stop(now + duration);
+    } catch (error) {
+      console.error('Error playing beep:', error);
     }
+  }
+
+  /**
+   * Test all sounds
+   */
+  testAllSounds() {
+    const sounds = Object.values(SOUND_DEFINITIONS);
+    let delay = 0;
+
+    sounds.forEach((sound) => {
+      setTimeout(() => {
+        this.play(sound.type as NotificationSoundType);
+      }, delay);
+      delay += (sound.duration || 500) + 200; // Add gap between sounds
+    });
   }
 
   /**
@@ -432,6 +573,18 @@ export class AudioNotificationService {
    */
   toggleSound(enabled: boolean) {
     this.isEnabled = enabled;
+    if (this.masterGainNode) {
+      this.masterGainNode.gain.value = enabled ? 0.9 : 0;
+    }
+  }
+
+  /**
+   * Set master volume
+   */
+  setVolume(level: number) {
+    if (this.masterGainNode) {
+      this.masterGainNode.gain.value = Math.max(0, Math.min(1, level));
+    }
   }
 
   /**
