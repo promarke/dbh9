@@ -11,7 +11,7 @@ export function useSystemInitialization() {
   const [isInitializing, setIsInitializing] = useState(false);
   
   const seedRoles = useMutation(api.roleSeed.seedDefaultRoles);
-  const roles = useQuery(api.userManagement.listRoles);
+  const roles = useQuery(api.userManagement.listRoles, {});
 
   useEffect(() => {
     const initializeSystem = async () => {

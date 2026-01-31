@@ -1,8 +1,13 @@
 import { useQuery } from "convex/react";
 import { api } from "../../convex/_generated/api";
 import { useOfflineSync } from "../hooks/useOfflineSync";
+import { useNotificationSystem, NotificationPresets } from "../hooks/useNotificationSystem";
+import { NotificationAlertsPanel, NotificationIcon, DashboardAlertsSummary } from "./NotificationAlertsPanel";
+import { useState, useEffect } from "react";
 
 export function Dashboard() {
+  const [notificationPanelOpen, setNotificationPanelOpen] = useState(false);
+  const { notify } = useNotificationSystem();
   const products = useQuery(api.products.list, {}) || [];
   const sales = useQuery(api.sales.list, {}) || [];
   const categories = useQuery(api.categories.list) || [];
@@ -54,6 +59,34 @@ export function Dashboard() {
     .sort((a, b) => b.quantity - a.quantity)
     .slice(0, 5);
 
+  // Monitor and trigger notifications
+  useEffect(() => {
+    // Check for low stock
+    lowStockProducts.forEach(product => {
+      notify({
+        ...NotificationPresets.lowStock(product.name, product.currentStock),
+      });
+    });
+
+    // Check for critical inventory
+    const criticalProducts = products.filter(p => p.currentStock <= 5);
+    if (criticalProducts.length > 0) {
+      criticalProducts.slice(0, 1).forEach(product => {
+        notify({
+          ...NotificationPresets.criticalInventory(product.name),
+        });
+      });
+    }
+
+    // Check today's sales performance
+    if (todayTotal > 0) {
+      notify({
+        ...NotificationPresets.saleSuccess(todayTotal),
+        duration: 3000,
+      });
+    }
+  }, [products, todayTotal, lowStockProducts, notify]);
+
   return (
     <div className="w-full min-h-screen bg-gradient-to-b from-slate-50 via-white to-slate-50">
       {/* Online/Offline Indicator */}
@@ -94,6 +127,15 @@ export function Dashboard() {
             </div>
 
             <div className="flex items-center gap-1 sm:gap-3 flex-shrink-0">
+              {/* Notification Button */}
+              <button
+                onClick={() => setNotificationPanelOpen(!notificationPanelOpen)}
+                className="p-2 hover:bg-slate-100 rounded-lg transition relative"
+                title="সূচনা এবং সতর্কতা"
+              >
+                <NotificationIcon />
+              </button>
+
               {isOnline ? (
                 <div className="flex items-center gap-1 px-1.5 sm:px-2 py-1 bg-green-50 rounded text-green-700 text-xs">
                   <span className="w-2 h-2 bg-green-500 rounded-full"></span>
@@ -402,8 +444,17 @@ export function Dashboard() {
               )}
             </div>
           </div>
+
+          {/* Dashboard Alerts Summary */}
+          <DashboardAlertsSummary />
         </div>
       </div>
+
+      {/* Notification Panel */}
+      <NotificationAlertsPanel 
+        isOpen={notificationPanelOpen} 
+        onClose={() => setNotificationPanelOpen(false)}
+      />
     </div>
   );
 }
