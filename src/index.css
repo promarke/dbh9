@@ -11,23 +11,43 @@
   }
 }
 
-/* Custom scrollbar */
+/* Custom scrollbar - iPhone Style */
 ::-webkit-scrollbar {
-  width: 6px;
+  width: 8px;
 }
 
 ::-webkit-scrollbar-track {
-  background: #f1f1f1;
-  border-radius: 3px;
+  background: transparent;
+  border-radius: 10px;
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #c1c1c1;
-  border-radius: 3px;
+  background: rgba(255, 255, 255, 0.3);
+  border-radius: 10px;
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #a1a1a1;
+  background: rgba(255, 255, 255, 0.5);
+}
+
+/* Custom scrollbar for sidebar */
+.custom-scrollbar::-webkit-scrollbar {
+  width: 6px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: rgba(139, 92, 246, 0.4);
+  border-radius: 10px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: rgba(139, 92, 246, 0.6);
 }
 
 /* Smooth transitions with GPU acceleration */
@@ -83,6 +103,15 @@
   }
   50% {
     box-shadow: 0 0 20px rgba(139, 92, 246, 0.6);
+  }
+}
+
+@keyframes glow {
+  0%, 100% {
+    box-shadow: 0 0 20px rgba(139, 92, 246, 0.5), inset 0 0 20px rgba(139, 92, 246, 0.2);
+  }
+  50% {
+    box-shadow: 0 0 40px rgba(59, 130, 246, 0.6), inset 0 0 30px rgba(139, 92, 246, 0.3);
   }
 }
 
@@ -377,5 +406,291 @@
   .auth-input-field,
   .auth-button {
     transition: none;
+  }
+}
+/* ====================== MOBILE RESPONSIVE STYLES ====================== */
+
+/* Mobile-first responsive utilities */
+@media (max-width: 640px) {
+  /* Body text sizes */
+  body {
+    @apply text-sm;
+  }
+
+  /* Table optimizations */
+  table {
+    @apply text-xs;
+  }
+
+  /* Card spacing */
+  .card-responsive {
+    @apply p-3;
+  }
+
+  /* Modal/Dialog responsive */
+  .modal-responsive {
+    @apply rounded-lg;
+  }
+
+  /* Input fields mobile */
+  input[type="text"],
+  input[type="email"],
+  input[type="password"],
+  input[type="number"],
+  select,
+  textarea {
+    @apply text-base;
+    min-height: 44px;
+    -webkit-appearance: none;
+    appearance: none;
+  }
+
+  /* Button sizing */
+  button {
+    min-height: 44px;
+    min-width: 44px;
+  }
+
+  /* Touch-friendly spacing */
+  .touch-target {
+    @apply min-h-12 min-w-12;
+  }
+}
+
+/* Small devices (< 640px) */
+@media (max-width: 639px) {
+  /* Improve readability */
+  h1 { @apply text-xl; }
+  h2 { @apply text-lg; }
+  h3 { @apply text-base; }
+  h4 { @apply text-sm; }
+
+  /* Grid adjustments */
+  .grid-responsive {
+    @apply grid-cols-1;
+  }
+
+  .grid-cols-2-responsive {
+    @apply grid-cols-1;
+  }
+
+  /* Hide non-essential columns in tables */
+  .hide-mobile {
+    @apply hidden;
+  }
+
+  /* Padding/Margin adjustments */
+  .px-responsive {
+    @apply px-2;
+  }
+
+  .py-responsive {
+    @apply py-2;
+  }
+
+  /* Container queries */
+  .container-responsive {
+    @apply px-3 py-2;
+  }
+}
+
+/* Medium devices (640px - 1024px) */
+@media (min-width: 640px) and (max-width: 1023px) {
+  .grid-responsive {
+    @apply grid-cols-2;
+  }
+
+  .grid-cols-2-responsive {
+    @apply grid-cols-2;
+  }
+}
+
+/* Large devices (> 1024px) */
+@media (min-width: 1024px) {
+  .grid-responsive {
+    @apply grid-cols-4;
+  }
+
+  .grid-cols-2-responsive {
+    @apply grid-cols-3;
+  }
+
+  .hide-mobile {
+    @apply block;
+  }
+}
+
+/* Table responsive design */
+@media (max-width: 768px) {
+  /* Hide non-essential table columns */
+  .table-hide-sm {
+    @apply hidden;
+  }
+
+  /* Stacked table view */
+  .table-stacked {
+    @apply block;
+    @apply w-full;
+  }
+
+  .table-stacked thead {
+    @apply hidden;
+  }
+
+  .table-stacked tbody,
+  .table-stacked tr,
+  .table-stacked td {
+    @apply block;
+    @apply w-full;
+  }
+
+  .table-stacked tr {
+    @apply border-b;
+    @apply border-gray-200;
+    @apply mb-4;
+    @apply pb-4;
+  }
+
+  .table-stacked td {
+    @apply relative;
+    @apply pl-24;
+    @apply py-2;
+  }
+
+  .table-stacked td::before {
+    content: attr(data-label);
+    position: absolute;
+    left: 0;
+    width: 20px;
+    font-weight: bold;
+    font-size: 0.75rem;
+    color: #6b7280;
+  }
+}
+
+/* Modal/Dialog responsive */
+@media (max-width: 640px) {
+  .modal-content {
+    @apply max-h-screen;
+    @apply rounded-t-2xl;
+    @apply rounded-b-none;
+    @apply min-h-96;
+  }
+
+  .modal-header {
+    @apply p-4;
+  }
+
+  .modal-body {
+    @apply p-4;
+    @apply overflow-y-auto;
+    @apply max-h-96;
+  }
+
+  .modal-footer {
+    @apply p-4;
+    @apply gap-2;
+  }
+
+  .modal-footer button {
+    @apply flex-1;
+    @apply py-3;
+  }
+}
+
+/* Form responsive */
+@media (max-width: 640px) {
+  .form-group {
+    @apply mb-3;
+  }
+
+  .form-label {
+    @apply block;
+    @apply text-xs;
+    @apply font-semibold;
+    @apply mb-1.5;
+  }
+
+  .form-input {
+    @apply w-full;
+    @apply text-sm;
+    @apply min-h-10;
+  }
+
+  /* Two-column form to single column on mobile */
+  .form-2col {
+    @apply flex;
+    @apply flex-col;
+    @apply gap-2;
+  }
+}
+
+/* Grid responsive classes */
+@media (max-width: 640px) {
+  .grid-auto-2 {
+    @apply grid-cols-2;
+    @apply gap-2;
+  }
+
+  .grid-auto-3 {
+    @apply grid-cols-1;
+    @apply gap-2;
+  }
+
+  .grid-auto-4 {
+    @apply grid-cols-2;
+    @apply gap-2;
+  }
+}
+
+/* Sidebar responsive */
+@media (max-width: 1024px) {
+  .sidebar-responsive {
+    @apply fixed;
+    @apply inset-y-0;
+    @apply left-0;
+    @apply -translate-x-full;
+    @apply w-64;
+    @apply transition-transform;
+    @apply duration-300;
+    @apply z-40;
+  }
+
+  .sidebar-responsive.open {
+    @apply translate-x-0;
+  }
+}
+
+/* Typography responsive */
+@media (max-width: 640px) {
+  .text-responsive-lg {
+    @apply text-base;
+  }
+
+  .text-responsive-2xl {
+    @apply text-lg;
+  }
+
+  .text-responsive-3xl {
+    @apply text-xl;
+  }
+
+  .text-responsive-4xl {
+    @apply text-2xl;
+  }
+}
+
+/* Spacing responsive */
+@media (max-width: 640px) {
+  .space-responsive-4 {
+    @apply gap-2;
+  }
+
+  .space-responsive-6 {
+    @apply gap-3;
+  }
+
+  .space-responsive-8 {
+    @apply gap-4;
   }
 }

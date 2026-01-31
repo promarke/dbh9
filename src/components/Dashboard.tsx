@@ -58,11 +58,11 @@ export function Dashboard() {
     <div className="w-full min-h-screen bg-gradient-to-b from-slate-50 via-white to-slate-50">
       {/* Online/Offline Indicator */}
       {!isOnline && (
-        <div className="bg-yellow-50 border-b border-yellow-200 px-4 py-2 sm:py-3">
-          <div className="max-w-7xl mx-auto flex items-center gap-2 text-sm">
+        <div className="bg-yellow-50 border-b border-yellow-200 px-3 py-2 sm:px-4 sm:py-3">
+          <div className="flex items-center gap-2 text-xs sm:text-sm">
             <span className="text-lg">📴</span>
             <span className="text-yellow-800 font-medium">
-              {isSyncing ? "🔄 Syncing changes..." : "You are offline - using cached data"}
+              {isSyncing ? "🔄 Syncing..." : "Offline - cached data"}
             </span>
           </div>
         </div>
@@ -70,42 +70,42 @@ export function Dashboard() {
       
       {/* Header */}
       <div className="sticky top-0 z-40 bg-white border-b border-slate-200 shadow-sm">
-        <div className="mx-auto px-4 sm:px-6 lg:px-8 py-3 sm:py-4">
-          <div className="flex items-center justify-between gap-4">
-            <div className="flex items-center gap-3">
-              <div className="flex-shrink-0 w-10 h-10 sm:w-12 sm:h-12 rounded-lg bg-gradient-to-br from-purple-500 to-purple-600 flex items-center justify-center border border-purple-300 shadow-md overflow-hidden">
+        <div className="px-3 sm:px-6 lg:px-8 py-2.5 sm:py-4">
+          <div className="flex items-center justify-between gap-2 sm:gap-4">
+            <div className="flex items-center gap-2 sm:gap-3 flex-1 min-w-0">
+              <div className="flex-shrink-0 w-8 h-8 sm:w-12 sm:h-12 rounded-lg bg-gradient-to-br from-purple-500 to-purple-600 flex items-center justify-center border border-purple-300 shadow-md overflow-hidden">
                 {storeSettings?.logo ? (
-                  <img src={storeSettings.logo} alt="Logo" className="w-8 h-8 sm:w-10 sm:h-10 object-contain" />
+                  <img src={storeSettings.logo} alt="Logo" className="w-6 h-6 sm:w-10 sm:h-10 object-contain" />
                 ) : (
-                  <img src="/LOGO2.png" alt="Dubai Borka House" className="w-8 h-8 sm:w-10 sm:h-10 object-contain" />
+                  <img src="/LOGO2.png" alt="Dubai Borka House" className="w-6 h-6 sm:w-10 sm:h-10 object-contain" />
                 )}
               </div>
-              <div className="hidden sm:block">
-                <h1 className="text-base sm:text-lg font-bold text-slate-900">
-                  {storeSettings?.storeTitle || "DUBAI BORKA HOUSE"}
+              <div className="min-w-0 flex-1">
+                <h1 className="text-sm sm:text-lg font-bold text-slate-900 truncate">
+                  {(storeSettings?.storeTitle || "DUBAI BORKA HOUSE").split(" ")[0]}
                 </h1>
-                {storeSettings?.tagline && <p className="text-xs text-slate-500 mt-0.5">{storeSettings.tagline}</p>}
+                <p className="hidden sm:block text-xs text-slate-500 truncate">{storeSettings?.tagline || "Management System"}</p>
               </div>
             </div>
 
-            <div className="hidden md:flex items-center gap-2 px-3 py-2 rounded-lg bg-slate-100 border border-slate-200">
-              <span className="text-sm text-slate-500">📅</span>
-              <span className="text-sm font-medium text-slate-700">{new Date().toLocaleDateString('en-BD')}</span>
+            <div className="hidden md:flex items-center gap-2 px-2 sm:px-3 py-1.5 sm:py-2 rounded-lg bg-slate-100 border border-slate-200 flex-shrink-0">
+              <span className="text-xs sm:text-sm text-slate-500">📅</span>
+              <span className="text-xs sm:text-sm font-medium text-slate-700">{new Date().toLocaleDateString('en-BD')}</span>
             </div>
 
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-1 sm:gap-3 flex-shrink-0">
               {isOnline ? (
-                <div className="flex items-center gap-1 px-2 py-1 bg-green-50 rounded text-green-700">
+                <div className="flex items-center gap-1 px-1.5 sm:px-2 py-1 bg-green-50 rounded text-green-700 text-xs">
                   <span className="w-2 h-2 bg-green-500 rounded-full"></span>
-                  <span className="text-xs font-medium">Online</span>
+                  <span className="hidden sm:inline font-medium">Online</span>
                 </div>
               ) : (
-                <div className="flex items-center gap-1 px-2 py-1 bg-yellow-50 rounded text-yellow-700">
+                <div className="flex items-center gap-1 px-1.5 sm:px-2 py-1 bg-yellow-50 rounded text-yellow-700 text-xs">
                   <span className="w-2 h-2 bg-yellow-500 rounded-full animate-pulse"></span>
-                  <span className="text-xs font-medium">Offline</span>
+                  <span className="hidden sm:inline font-medium">Offline</span>
                 </div>
               )}
-              <div className="text-xs sm:text-sm text-slate-600">
+              <div className="text-xs text-slate-600">
                 {new Date().toLocaleTimeString('en-BD', { hour: '2-digit', minute: '2-digit' })}
               </div>
             </div>
@@ -114,250 +114,248 @@ export function Dashboard() {
       </div>
 
       {/* Main Content */}
-      <div className="mx-auto px-4 sm:px-6 lg:px-8 py-8 md:py-12 max-w-7xl">
-        <div className="space-y-8">
-          {/* Metrics Row 1: 4 Cards */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
+      <div className="px-2.5 sm:px-6 lg:px-8 py-4 sm:py-8 lg:py-12 w-full max-w-screen-2xl mx-auto">
+        <div className="space-y-4 sm:space-y-6 lg:space-y-8">
+          {/* Metrics Row 1: Responsive Grid */}
+          <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-4 lg:gap-6">
             {/* Card 1: Total Bundles */}
-            <div className="bg-white rounded-xl border border-slate-200 hover:border-slate-300 hover:shadow-md transition-all p-6">
-              <div className="flex items-start justify-between mb-4">
-                <div>
-                  <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">Total Bundles</p>
-                  <p className="text-4xl font-bold text-slate-900">{totalProducts}</p>
+            <div className="bg-white rounded-lg sm:rounded-xl border border-slate-200 hover:border-slate-300 hover:shadow-md transition-all p-3 sm:p-6">
+              <div className="flex items-start justify-between mb-2 sm:mb-4">
+                <div className="flex-1 min-w-0">
+                  <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1 sm:mb-2">Bundles</p>
+                  <p className="text-2xl sm:text-4xl font-bold text-slate-900">{totalProducts}</p>
                 </div>
-                <div className="w-12 h-12 rounded-lg bg-blue-100 border border-blue-200 flex items-center justify-center text-xl">📦</div>
+                <div className="w-8 h-8 sm:w-12 sm:h-12 rounded-lg bg-blue-100 border border-blue-200 flex items-center justify-center text-lg sm:text-xl flex-shrink-0">📦</div>
               </div>
-              <p className="text-sm text-slate-600">In inventory</p>
+              <p className="text-xs sm:text-sm text-slate-600">In inventory</p>
             </div>
 
             {/* Card 2: In Stock */}
-            <div className="bg-white rounded-xl border border-slate-200 hover:border-slate-300 hover:shadow-md transition-all p-6">
-              <div className="flex items-start justify-between mb-4">
-                <div>
-                  <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">In Stock</p>
-                  <p className="text-4xl font-bold text-slate-900">{totalAbayas}</p>
+            <div className="bg-white rounded-lg sm:rounded-xl border border-slate-200 hover:border-slate-300 hover:shadow-md transition-all p-3 sm:p-6">
+              <div className="flex items-start justify-between mb-2 sm:mb-4">
+                <div className="flex-1 min-w-0">
+                  <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1 sm:mb-2">In Stock</p>
+                  <p className="text-2xl sm:text-4xl font-bold text-slate-900">{totalAbayas}</p>
                 </div>
-                <div className="w-12 h-12 rounded-lg bg-green-100 border border-green-200 flex items-center justify-center text-xl">👗</div>
+                <div className="w-8 h-8 sm:w-12 sm:h-12 rounded-lg bg-green-100 border border-green-200 flex items-center justify-center text-lg sm:text-xl flex-shrink-0">👗</div>
               </div>
-              <p className="text-sm text-slate-600">Ready for sale</p>
+              <p className="text-xs sm:text-sm text-slate-600">Ready sale</p>
             </div>
 
             {/* Card 3: Low Stock Items */}
-            <div className="bg-white rounded-xl border border-slate-200 hover:border-slate-300 hover:shadow-md transition-all p-6">
-              <div className="flex items-start justify-between mb-4">
-                <div>
-                  <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">Low Stock</p>
-                  <p className="text-4xl font-bold text-slate-900">{lowStockProducts.length}</p>
+            <div className="bg-white rounded-lg sm:rounded-xl border border-slate-200 hover:border-slate-300 hover:shadow-md transition-all p-3 sm:p-6">
+              <div className="flex items-start justify-between mb-2 sm:mb-4">
+                <div className="flex-1 min-w-0">
+                  <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1 sm:mb-2">Low</p>
+                  <p className="text-2xl sm:text-4xl font-bold text-slate-900">{lowStockProducts.length}</p>
                 </div>
-                <div className="w-12 h-12 rounded-lg bg-yellow-100 border border-yellow-200 flex items-center justify-center text-xl">⚠️</div>
+                <div className="w-8 h-8 sm:w-12 sm:h-12 rounded-lg bg-yellow-100 border border-yellow-200 flex items-center justify-center text-lg sm:text-xl flex-shrink-0">⚠️</div>
               </div>
-              <p className="text-sm text-slate-600">Need restocking</p>
+              <p className="text-xs sm:text-sm text-slate-600">Restock</p>
             </div>
 
             {/* Card 4: Inventory Value */}
-            <div className="bg-white rounded-xl border border-slate-200 hover:border-slate-300 hover:shadow-md transition-all p-6">
-              <div className="flex items-start justify-between mb-4">
-                <div>
-                  <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">Inventory Value</p>
-                  <p className="text-4xl font-bold text-slate-900">৳{(totalValue / 100000).toFixed(1)}L</p>
+            <div className="bg-white rounded-lg sm:rounded-xl border border-slate-200 hover:border-slate-300 hover:shadow-md transition-all p-3 sm:p-6">
+              <div className="flex items-start justify-between mb-2 sm:mb-4">
+                <div className="flex-1 min-w-0">
+                  <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1 sm:mb-2">Value</p>
+                  <p className="text-2xl sm:text-4xl font-bold text-slate-900">৳{(totalValue / 100000).toFixed(1)}L</p>
                 </div>
-                <div className="w-12 h-12 rounded-lg bg-purple-100 border border-purple-200 flex items-center justify-center text-xl">💰</div>
+                <div className="w-8 h-8 sm:w-12 sm:h-12 rounded-lg bg-purple-100 border border-purple-200 flex items-center justify-center text-lg sm:text-xl flex-shrink-0">💰</div>
               </div>
-              <p className="text-sm text-slate-600">Total stock worth</p>
+              <p className="text-xs sm:text-sm text-slate-600">Stock worth</p>
             </div>
           </div>
 
-          {/* Sales Section: 2 Cards */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          {/* Sales Section: Responsive Cards */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
             {/* Sales Overview Card */}
-            <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-6">
-              <div className="flex items-center gap-3 mb-6">
-                <span className="text-2xl">💵</span>
-                <h3 className="text-lg font-bold text-slate-900">Sales Overview</h3>
+            <div className="bg-white rounded-lg sm:rounded-xl border border-slate-200 shadow-sm p-4 sm:p-6">
+              <div className="flex items-center gap-2 sm:gap-3 mb-4 sm:mb-6">
+                <span className="text-xl sm:text-2xl">💵</span>
+                <h3 className="text-base sm:text-lg font-bold text-slate-900">Sales Overview</h3>
               </div>
 
-              <div className="space-y-3">
+              <div className="space-y-2 sm:space-y-3">
                 {/* Today's Sales */}
-                <div className="bg-gradient-to-r from-green-50 to-green-100/50 rounded-lg p-4 border border-green-200">
-                  <div className="flex justify-between items-start mb-2">
-                    <p className="text-xs font-semibold text-green-700 uppercase">Today's Sales</p>
-                    <p className="text-2xl font-bold text-green-900">৳{todayTotal.toLocaleString('en-BD')}</p>
+                <div className="bg-gradient-to-r from-green-50 to-green-100/50 rounded-lg p-3 sm:p-4 border border-green-200">
+                  <div className="flex justify-between items-start gap-2 mb-1 sm:mb-2">
+                    <p className="text-xs font-semibold text-green-700 uppercase">Today</p>
+                    <p className="text-lg sm:text-2xl font-bold text-green-900 text-right">৳{todayTotal.toLocaleString('en-BD')}</p>
                   </div>
-                  <p className="text-sm text-green-700">{todaysSales.length} transactions</p>
+                  <p className="text-xs text-green-700">{todaysSales.length} txn</p>
                 </div>
 
                 {/* Last 7 Days */}
-                <div className="bg-gradient-to-r from-blue-50 to-blue-100/50 rounded-lg p-4 border border-blue-200">
-                  <div className="flex justify-between items-start mb-2">
-                    <p className="text-xs font-semibold text-blue-700 uppercase">Last 7 Days</p>
-                    <p className="text-2xl font-bold text-blue-900">৳{totalRecentSales.toLocaleString('en-BD')}</p>
+                <div className="bg-gradient-to-r from-blue-50 to-blue-100/50 rounded-lg p-3 sm:p-4 border border-blue-200">
+                  <div className="flex justify-between items-start gap-2 mb-1 sm:mb-2">
+                    <p className="text-xs font-semibold text-blue-700 uppercase">7 Days</p>
+                    <p className="text-lg sm:text-2xl font-bold text-blue-900 text-right">৳{totalRecentSales.toLocaleString('en-BD')}</p>
                   </div>
-                  <p className="text-sm text-blue-700">{recentSales.length} transactions</p>
+                  <p className="text-xs text-blue-700">{recentSales.length} txn</p>
                 </div>
 
                 {/* Total Sales */}
-                <div className="bg-gradient-to-r from-purple-50 to-purple-100/50 rounded-lg p-4 border border-purple-200">
-                  <div className="flex justify-between items-start mb-2">
-                    <p className="text-xs font-semibold text-purple-700 uppercase">Total Sales</p>
-                    <p className="text-2xl font-bold text-purple-900">৳{sales.reduce((sum, sale) => sum + sale.total, 0).toLocaleString('en-BD')}</p>
+                <div className="bg-gradient-to-r from-purple-50 to-purple-100/50 rounded-lg p-3 sm:p-4 border border-purple-200">
+                  <div className="flex justify-between items-start gap-2 mb-1 sm:mb-2">
+                    <p className="text-xs font-semibold text-purple-700 uppercase">Total</p>
+                    <p className="text-lg sm:text-2xl font-bold text-purple-900 text-right">৳{sales.reduce((sum, sale) => sum + sale.total, 0).toLocaleString('en-BD')}</p>
                   </div>
-                  <p className="text-sm text-purple-700">{sales.length} transactions</p>
+                  <p className="text-xs text-purple-700">{sales.length} txn</p>
                 </div>
               </div>
             </div>
 
             {/* Top Products Card */}
-            <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-6">
-              <div className="flex items-center gap-3 mb-6">
-                <span className="text-2xl">🏆</span>
-                <h3 className="text-lg font-bold text-slate-900">Top Selling Products</h3>
+            <div className="bg-white rounded-lg sm:rounded-xl border border-slate-200 shadow-sm p-4 sm:p-6">
+              <div className="flex items-center gap-2 sm:gap-3 mb-4 sm:mb-6">
+                <span className="text-xl sm:text-2xl">🏆</span>
+                <h3 className="text-base sm:text-lg font-bold text-slate-900">Top Products</h3>
               </div>
 
               <div className="space-y-2">
                 {topProducts.length > 0 ? (
                   topProducts.map((product, index) => (
-                    <div key={index} className="flex items-center justify-between p-3 bg-slate-50 rounded-lg border border-slate-200 hover:bg-slate-100 transition">
-                      <div className="flex items-center gap-3 flex-1">
-                        <span className="flex items-center justify-center w-8 h-8 rounded-full bg-purple-500 text-white text-xs font-bold">
+                    <div key={index} className="flex items-center justify-between p-2 sm:p-3 bg-slate-50 rounded-lg border border-slate-200 hover:bg-slate-100 transition gap-2">
+                      <div className="flex items-center gap-2 sm:gap-3 flex-1 min-w-0">
+                        <span className="flex items-center justify-center w-6 h-6 sm:w-8 sm:h-8 rounded-full bg-purple-500 text-white text-xs font-bold flex-shrink-0">
                           {index + 1}
                         </span>
                         <div className="flex-1 min-w-0">
-                          <p className="text-sm font-semibold text-slate-900 truncate">{product.name}</p>
+                          <p className="text-xs sm:text-sm font-semibold text-slate-900 truncate">{product.name}</p>
                           <p className="text-xs text-slate-600">{product.quantity} sold</p>
                         </div>
                       </div>
-                      <p className="text-sm font-bold text-slate-900 ml-2">৳{product.revenue.toLocaleString('en-BD')}</p>
+                      <p className="text-xs sm:text-sm font-bold text-slate-900 flex-shrink-0">৳{(product.revenue / 1000).toFixed(0)}K</p>
                     </div>
                   ))
                 ) : (
-                  <p className="text-center text-slate-400 py-6">No sales data</p>
+                  <p className="text-center text-slate-400 py-6 text-sm">No data</p>
                 )}
               </div>
             </div>
           </div>
 
-          {/* Metrics Row 2: 5 Cards (including Refunds) */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 sm:gap-6">
+          {/* Metrics Row 2: 5 Cards (Mobile: 2x3 Grid) */}
+          <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-5 gap-2 sm:gap-4 lg:gap-6">
             {/* Total Customers */}
-            <div className="bg-white rounded-xl border border-slate-200 hover:border-slate-300 hover:shadow-md transition-all p-6">
-              <div className="flex items-start justify-between mb-4">
-                <div>
-                  <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">Total Customers</p>
-                  <p className="text-4xl font-bold text-slate-900">{customers.length}</p>
+            <div className="bg-white rounded-lg sm:rounded-xl border border-slate-200 hover:border-slate-300 hover:shadow-md transition-all p-3 sm:p-6">
+              <div className="flex items-start justify-between mb-2 sm:mb-4">
+                <div className="flex-1 min-w-0">
+                  <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1 sm:mb-2">Customers</p>
+                  <p className="text-2xl sm:text-4xl font-bold text-slate-900">{customers.length}</p>
                 </div>
-                <div className="w-12 h-12 rounded-lg bg-indigo-100 border border-indigo-200 flex items-center justify-center text-xl">👥</div>
+                <div className="w-8 h-8 sm:w-12 sm:h-12 rounded-lg bg-indigo-100 border border-indigo-200 flex items-center justify-center text-lg sm:text-xl flex-shrink-0">👥</div>
               </div>
-              <p className="text-sm text-slate-600">Registered clients</p>
+              <p className="text-xs sm:text-sm text-slate-600">Registered</p>
             </div>
 
             {/* Categories */}
-            <div className="bg-white rounded-xl border border-slate-200 hover:border-slate-300 hover:shadow-md transition-all p-6">
-              <div className="flex items-start justify-between mb-4">
-                <div>
-                  <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">Categories</p>
-                  <p className="text-4xl font-bold text-slate-900">{categories.length}</p>
+            <div className="bg-white rounded-lg sm:rounded-xl border border-slate-200 hover:border-slate-300 hover:shadow-md transition-all p-3 sm:p-6">
+              <div className="flex items-start justify-between mb-2 sm:mb-4">
+                <div className="flex-1 min-w-0">
+                  <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1 sm:mb-2">Categories</p>
+                  <p className="text-2xl sm:text-4xl font-bold text-slate-900">{categories.length}</p>
                 </div>
-                <div className="w-12 h-12 rounded-lg bg-pink-100 border border-pink-200 flex items-center justify-center text-xl">📂</div>
+                <div className="w-8 h-8 sm:w-12 sm:h-12 rounded-lg bg-pink-100 border border-pink-200 flex items-center justify-center text-lg sm:text-xl flex-shrink-0">📂</div>
               </div>
-              <p className="text-sm text-slate-600">Product types</p>
+              <p className="text-xs sm:text-sm text-slate-600">Types</p>
             </div>
 
             {/* Average Sale Value */}
-            <div className="bg-white rounded-xl border border-slate-200 hover:border-slate-300 hover:shadow-md transition-all p-6">
-              <div className="flex items-start justify-between mb-4">
-                <div>
-                  <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">Avg. Sale Value</p>
-                  <p className="text-4xl font-bold text-slate-900">৳{sales.length > 0 ? Math.round(sales.reduce((sum, sale) => sum + sale.total, 0) / sales.length).toLocaleString('en-BD') : '0'}</p>
+            <div className="bg-white rounded-lg sm:rounded-xl border border-slate-200 hover:border-slate-300 hover:shadow-md transition-all p-3 sm:p-6">
+              <div className="flex items-start justify-between mb-2 sm:mb-4">
+                <div className="flex-1 min-w-0">
+                  <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1 sm:mb-2">Avg Sale</p>
+                  <p className="text-2xl sm:text-4xl font-bold text-slate-900">৳{sales.length > 0 ? Math.round(sales.reduce((sum, sale) => sum + sale.total, 0) / sales.length).toLocaleString('en-BD') : '0'}</p>
                 </div>
-                <div className="w-12 h-12 rounded-lg bg-orange-100 border border-orange-200 flex items-center justify-center text-xl">📈</div>
+                <div className="w-8 h-8 sm:w-12 sm:h-12 rounded-lg bg-orange-100 border border-orange-200 flex items-center justify-center text-lg sm:text-xl flex-shrink-0">📈</div>
               </div>
-              <p className="text-sm text-slate-600">Per transaction</p>
+              <p className="text-xs sm:text-sm text-slate-600">Per txn</p>
             </div>
 
             {/* Stock Turnover */}
-            <div className="bg-white rounded-xl border border-slate-200 hover:border-slate-300 hover:shadow-md transition-all p-6">
-              <div className="flex items-start justify-between mb-4">
-                <div>
-                  <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">Stock Turnover</p>
-                  <p className="text-4xl font-bold text-slate-900">{totalAbayas > 0 ? Math.round((sales.reduce((sum, sale) => sum + sale.items.reduce((itemSum, item) => itemSum + item.quantity, 0), 0) / totalAbayas) * 100) : 0}%</p>
+            <div className="bg-white rounded-lg sm:rounded-xl border border-slate-200 hover:border-slate-300 hover:shadow-md transition-all p-3 sm:p-6">
+              <div className="flex items-start justify-between mb-2 sm:mb-4">
+                <div className="flex-1 min-w-0">
+                  <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1 sm:mb-2">Turnover</p>
+                  <p className="text-2xl sm:text-4xl font-bold text-slate-900">{totalAbayas > 0 ? Math.round((sales.reduce((sum, sale) => sum + sale.items.reduce((itemSum, item) => itemSum + item.quantity, 0), 0) / totalAbayas) * 100) : 0}%</p>
                 </div>
-                <div className="w-12 h-12 rounded-lg bg-red-100 border border-red-200 flex items-center justify-center text-xl">🔄</div>
+                <div className="w-8 h-8 sm:w-12 sm:h-12 rounded-lg bg-red-100 border border-red-200 flex items-center justify-center text-lg sm:text-xl flex-shrink-0">🔄</div>
               </div>
-              <p className="text-sm text-slate-600">Movement rate</p>
+              <p className="text-xs sm:text-sm text-slate-600">Rate</p>
             </div>
 
-            {/* ✅ Refund Management Card */}
-            <div className="bg-white rounded-xl border border-slate-200 hover:border-slate-300 hover:shadow-md transition-all p-6">
-              <div className="flex items-start justify-between mb-4">
-                <div>
-                  <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">Refunds</p>
-                  <p className="text-4xl font-bold text-slate-900">{totalRefunds}</p>
+            {/* Refund Management Card */}
+            <div className="bg-white rounded-lg sm:rounded-xl border border-slate-200 hover:border-slate-300 hover:shadow-md transition-all p-3 sm:p-6">
+              <div className="flex items-start justify-between mb-2 sm:mb-4">
+                <div className="flex-1 min-w-0">
+                  <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1 sm:mb-2">Refunds</p>
+                  <p className="text-2xl sm:text-4xl font-bold text-slate-900">{totalRefunds}</p>
                 </div>
-                <div className="w-12 h-12 rounded-lg bg-amber-100 border border-amber-200 flex items-center justify-center text-xl">🔄</div>
+                <div className="w-8 h-8 sm:w-12 sm:h-12 rounded-lg bg-amber-100 border border-amber-200 flex items-center justify-center text-lg sm:text-xl flex-shrink-0">🔄</div>
               </div>
               <div className="space-y-1">
-                <p className="text-sm text-slate-600">৳{totalRefundAmount.toLocaleString('en-BD')} total</p>
-                <p className="text-xs text-slate-500">{refundRate}% refund rate</p>
+                <p className="text-xs sm:text-sm text-slate-600">৳{(totalRefundAmount / 1000).toFixed(0)}K</p>
+                <p className="text-xs text-slate-500">{refundRate}% rate</p>
               </div>
             </div>
           </div>
 
-          {/* Low Stock Alert & Refund Status */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          {/* Low Stock Alert & Refund Status - Responsive */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
             {/* Low Stock Alert */}
             {lowStockProducts.length > 0 && (
-              <div className="bg-white rounded-xl border border-red-200 p-6">
-                <div className="flex items-center gap-3 mb-4">
-                  <span className="text-2xl animate-pulse">⚠️</span>
-                  <h3 className="text-lg font-bold text-red-900">Low Stock Alert</h3>
-                  <span className="ml-auto inline-block px-3 py-1 rounded-full bg-red-100 text-red-700 text-xs font-semibold">
-                    {lowStockProducts.length} items
+              <div className="bg-white rounded-lg sm:rounded-xl border border-red-200 p-4 sm:p-6">
+                <div className="flex items-center gap-2 sm:gap-3 mb-3 sm:mb-4 flex-wrap">
+                  <span className="text-xl sm:text-2xl animate-pulse">⚠️</span>
+                  <h3 className="text-base sm:text-lg font-bold text-red-900">Low Stock</h3>
+                  <span className="ml-auto inline-block px-2.5 sm:px-3 py-1 rounded-full bg-red-100 text-red-700 text-xs font-semibold">
+                    {lowStockProducts.length}
                   </span>
                 </div>
-                <p className="text-sm text-red-700 mb-4">{lowStockProducts.length} product(s) need restocking</p>
+                <p className="text-xs sm:text-sm text-red-700 mb-3 sm:mb-4">{lowStockProducts.length} item(s) need restock</p>
                 <div className="space-y-2">
                   {lowStockProducts.slice(0, 4).map((product) => (
-                    <div key={product._id} className="bg-red-50 rounded-lg p-3 border border-red-200">
-                      <p className="text-sm font-semibold text-slate-900">{product.name}</p>
-                      <p className="text-xs text-red-700 mt-2">
-                        Stock: <span className="font-bold">{product.currentStock}</span> / Min: {product.minStockLevel}
-                      </p>
+                    <div key={product._id} className="bg-red-50 rounded-lg p-2.5 sm:p-3 border border-red-200">
+                      <p className="text-xs sm:text-sm font-semibold text-red-900 truncate">{product.productName}</p>
+                      <p className="text-xs text-red-700 mt-1">Stock: {product.currentStock} / Min: {product.minStockLevel}</p>
                     </div>
                   ))}
                 </div>
                 {lowStockProducts.length > 4 && (
-                  <p className="text-xs text-red-700 mt-4 font-medium">+{lowStockProducts.length - 4} more items</p>
+                  <p className="text-xs text-red-700 mt-3 sm:mt-4 font-medium">+{lowStockProducts.length - 4} more</p>
                 )}
               </div>
             )}
 
-            {/* ✅ Refund Status Card */}
-            <div className="bg-white rounded-xl border border-slate-200 p-6">
-              <div className="flex items-center gap-3 mb-6">
-                <span className="text-2xl">🔄</span>
-                <h3 className="text-lg font-bold text-slate-900">Refund Status</h3>
+            {/* Refund Status Card */}
+            <div className="bg-white rounded-lg sm:rounded-xl border border-slate-200 p-4 sm:p-6">
+              <div className="flex items-center gap-2 sm:gap-3 mb-4 sm:mb-6">
+                <span className="text-xl sm:text-2xl">🔄</span>
+                <h3 className="text-base sm:text-lg font-bold text-slate-900">Refund Status</h3>
               </div>
 
-              <div className="space-y-3">
+              <div className="space-y-2 sm:space-y-3">
                 {/* Pending Approvals */}
-                <div className={`rounded-lg p-4 border ${pendingRefunds.length > 0 ? 'bg-red-50 border-red-200' : 'bg-gray-50 border-gray-200'}`}>
-                  <div className="flex justify-between items-start mb-2">
+                <div className={`rounded-lg p-3 sm:p-4 border ${pendingRefunds.length > 0 ? 'bg-red-50 border-red-200' : 'bg-gray-50 border-gray-200'}`}>
+                  <div className="flex justify-between items-start gap-2 mb-1 sm:mb-2">
                     <p className={`text-xs font-semibold uppercase ${pendingRefunds.length > 0 ? 'text-red-700' : 'text-gray-700'}`}>
-                      Pending Approvals
+                      Pending
                     </p>
-                    <p className={`text-2xl font-bold ${pendingRefunds.length > 0 ? 'text-red-900' : 'text-gray-900'}`}>
+                    <p className={`text-lg sm:text-2xl font-bold ${pendingRefunds.length > 0 ? 'text-red-900' : 'text-gray-900'}`}>
                       {pendingRefunds.length}
                     </p>
                   </div>
                   {pendingRefunds.length > 0 && (
-                    <p className={`text-sm ${pendingRefunds.length > 0 ? 'text-red-700' : 'text-gray-700'}`}>
-                      Action required
+                    <p className={`text-xs sm:text-sm ${pendingRefunds.length > 0 ? 'text-red-700' : 'text-gray-700'}`}>
+                      Action needed
                     </p>
                   )}
                 </div>
 
                 {/* Completed Refunds */}
-                <div className="bg-green-50 rounded-lg p-4 border border-green-200">
+                <div className="bg-green-50 rounded-lg p-3 sm:p-4 border border-green-200">
                   <div className="flex justify-between items-start mb-2">
                     <p className="text-xs font-semibold text-green-700 uppercase">Completed Refunds</p>
                     <p className="text-2xl font-bold text-green-900">{completedRefunds.length}</p>

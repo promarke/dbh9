@@ -191,28 +191,28 @@ export default function App() {
         <LoginWrapper />
       </Unauthenticated>
       <Authenticated>
-        <div className="min-h-screen flex flex-col bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 pb-16 lg:pb-0">
-          {/* Mobile Header */}
-          <div className="lg:hidden sticky top-0 z-40 bg-white/10 backdrop-blur-xl border-b border-white/20 shadow-lg">
-            <div className="flex items-center justify-between px-4 py-3 gap-3">
-              {/* Menu Toggle */}
+        <div className="min-h-screen flex flex-col bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900">
+          {/* Mobile Header - iPhone Style */}
+          <div className="lg:hidden sticky top-0 z-50 bg-gradient-to-b from-slate-900/80 via-slate-800/70 to-slate-900/60 backdrop-blur-xl border-b border-white/20 shadow-2xl">
+            <div className="flex items-center justify-between px-4 py-4 gap-3">
+              {/* Menu Toggle - iPhone Button Style */}
               <button
                 onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-                className="flex-shrink-0 w-10 h-10 rounded-lg bg-white/10 border border-white/20 flex items-center justify-center text-white hover:bg-white/20 transition-all duration-200"
+                className="flex-shrink-0 w-12 h-12 rounded-xl bg-gradient-to-br from-white/20 to-white/10 border border-white/30 flex items-center justify-center text-white hover:bg-white/25 transition-all duration-300 font-bold text-lg shadow-lg backdrop-blur-md active:scale-95"
               >
-                <span className="text-lg">☰</span>
+                <span>☰</span>
               </button>
 
               {/* Logo & Store Title */}
-              <div className="flex items-center gap-2 flex-1">
-                <div className="flex-shrink-0 w-10 h-10 rounded-lg bg-white/10 border border-white/20 flex items-center justify-center overflow-hidden">
+              <div className="flex items-center gap-3 flex-1">
+                <div className="flex-shrink-0 w-11 h-11 rounded-xl bg-gradient-to-br from-purple-500/40 to-blue-500/30 border border-white/25 flex items-center justify-center overflow-hidden shadow-lg backdrop-blur-md">
                   {storeSettings?.logo ? (
-                    <img src={storeSettings.logo} alt="Logo" className="w-8 h-8 object-contain" />
+                    <img src={storeSettings.logo} alt="Logo" className="w-9 h-9 object-contain" />
                   ) : (
-                    <img src="/LOGO2.png" alt="Dubai Borka House" className="w-8 h-8 object-contain" />
+                    <img src="/LOGO2.png" alt="Dubai Borka House" className="w-9 h-9 object-contain" />
                   )}
                 </div>
-                <h1 className="text-sm font-bold text-white truncate">
+                <h1 className="text-base font-bold text-white truncate tracking-tight">
                   {(storeSettings?.storeTitle || "DUBAI BORKA HOUSE").split(" ")[0]}
                 </h1>
               </div>
@@ -222,11 +222,20 @@ export default function App() {
                 <SignOutButton />
               </div>
             </div>
+          </div>
 
-            {/* Mobile Menu Dropdown */}
-            {isMobileMenuOpen && (
-              <div className="absolute top-full left-0 right-0 bg-white/10 backdrop-blur-xl border-t border-white/20 shadow-xl z-50">
-                <div className="max-h-96 overflow-y-auto">
+          {/* Mobile Sidebar Menu - Full Width Overlay */}
+          {isMobileMenuOpen && (
+            <>
+              {/* Backdrop Overlay */}
+              <div
+                className="lg:hidden fixed inset-0 bg-black/50 z-40 top-16"
+                onClick={() => setIsMobileMenuOpen(false)}
+              />
+              
+              {/* Mobile Menu Panel */}
+              <div className="lg:hidden fixed top-16 left-0 right-0 bottom-0 z-50 bg-gradient-to-b from-slate-800/98 via-slate-800/95 to-slate-900/98 backdrop-blur-xl border-b border-white/20 shadow-2xl overflow-y-auto custom-scrollbar">
+                <nav className="py-4 space-y-2 px-3">
                   {mobileMenuItems.map((item) => (
                     <button
                       key={item.id}
@@ -234,109 +243,89 @@ export default function App() {
                         setActiveTab(item.id);
                         setIsMobileMenuOpen(false);
                       }}
-                      className={`w-full flex items-center gap-3 px-4 py-3 text-left border-b border-white/10 transition-all duration-200 ${
+                      className={`w-full flex items-center gap-4 px-5 py-4 text-left transition-all duration-300 rounded-2xl font-bold text-base ${
                         activeTab === item.id 
-                          ? "bg-white/20 text-white border-l-4 border-l-purple-400" 
-                          : "text-white/70 hover:bg-white/10 hover:text-white"
+                          ? "bg-gradient-to-r from-purple-500/50 via-blue-500/40 to-purple-500/30 text-white border border-white/40 shadow-lg shadow-purple-500/30" 
+                          : "text-white/70 hover:bg-white/15 hover:text-white hover:backdrop-blur-md"
                       }`}
                     >
-                      <span className="text-lg flex-shrink-0">{item.icon}</span>
-                      <span className="font-medium text-sm">{item.name}</span>
+                      <span className={`text-2xl flex-shrink-0 transition-all duration-300 ${activeTab === item.id ? "scale-125 drop-shadow-lg" : ""}`}>{item.icon}</span>
+                      <span className="font-bold text-base">{item.name}</span>
+                      {activeTab === item.id && (
+                        <div className="ml-auto w-3 h-3 rounded-full bg-white shadow-lg shadow-white/50 animate-pulse"></div>
+                      )}
                     </button>
                   ))}
-                </div>
+                </nav>
               </div>
-            )}
-          </div>
+            </>
+          )}
 
-          <div className="flex h-screen lg:h-auto">
-            {/* Desktop Sidebar - Modern Design */}
-            <div className="hidden lg:flex lg:flex-col lg:w-72 lg:fixed lg:inset-y-0 lg:bg-gradient-to-b lg:from-slate-800 lg:to-slate-900 lg:border-r lg:border-white/10 lg:shadow-2xl">
-              {/* Logo Section */}
-              <div className="flex items-center justify-center flex-shrink-0 px-6 py-6 border-b border-white/10">
-                <div className="text-center">
-                  <div className="w-16 h-16 rounded-full bg-gradient-to-br from-purple-400/20 to-blue-400/20 border border-white/20 flex items-center justify-center mb-3 mx-auto shadow-lg overflow-hidden">
+          <div className="flex flex-col lg:flex-row flex-1">
+            {/* Desktop Sidebar - iPhone Features Style */}
+            <div className="hidden lg:flex lg:flex-col lg:w-80 lg:fixed lg:inset-y-0 lg:bg-gradient-to-b lg:from-slate-900/95 lg:via-slate-800/90 lg:to-slate-900/95 lg:border-r lg:border-white/15 lg:shadow-2xl lg:backdrop-blur-xl lg:overflow-y-auto lg:custom-scrollbar">
+              {/* Logo Section - Premium Card Style */}
+              <div className="flex items-center justify-center flex-shrink-0 px-6 py-8 border-b border-white/10">
+                <div className="text-center w-full">
+                  <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-purple-500/40 via-blue-500/30 to-indigo-500/40 border border-white/25 flex items-center justify-center mb-4 mx-auto shadow-2xl overflow-hidden backdrop-blur-md transform hover:scale-105 transition-transform duration-300">
                     {storeSettings?.logo ? (
-                      <img src={storeSettings.logo} alt="Logo" className="w-14 h-14 object-contain" />
+                      <img src={storeSettings.logo} alt="Logo" className="w-16 h-16 object-contain" />
                     ) : (
-                      <img src="/LOGO2.png" alt="Dubai Borka House" className="w-14 h-14 object-contain rounded-full" />
+                      <img src="/LOGO2.png" alt="Dubai Borka House" className="w-16 h-16 object-contain rounded-xl" />
                     )}
                   </div>
-                  <h2 className="text-sm font-bold text-white mb-1">
+                  <h2 className="text-lg font-black text-white mb-2 tracking-tight">
                     {storeSettings?.storeTitle || "DUBAI BORKA HOUSE"}
                   </h2>
                   {storeSettings?.tagline && (
-                    <p className="text-xs text-white/50">{storeSettings.tagline}</p>
+                    <p className="text-xs font-semibold text-white/60 tracking-wide">{storeSettings.tagline}</p>
                   )}
                 </div>
               </div>
 
-              {/* Navigation */}
-              <nav className="flex-1 px-3 py-6 overflow-y-auto space-y-2">
-                {desktopMenuItems.map((item) => (
+              {/* Navigation - iPhone Glass Morphism */}
+              <nav className="flex-1 px-4 py-8 overflow-y-auto space-y-2 custom-scrollbar">
+                {desktopMenuItems.map((item, index) => (
                   <button
                     key={item.id}
                     onClick={() => setActiveTab(item.id)}
-                    className={`group w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-200 text-left font-medium text-sm ${
+                    className={`group w-full flex items-center gap-4 px-5 py-4 rounded-2xl transition-all duration-300 text-left font-bold text-base ${
                       activeTab === item.id
-                        ? "bg-gradient-to-r from-purple-500/30 to-blue-500/20 text-white border border-purple-400/30 shadow-lg shadow-purple-500/20"
-                        : "text-white/70 hover:text-white hover:bg-white/10"
+                        ? "bg-gradient-to-r from-purple-500/50 via-blue-500/40 to-purple-500/30 text-white border border-white/40 shadow-2xl shadow-purple-500/30 backdrop-blur-xl scale-105"
+                        : "text-white/75 hover:text-white hover:bg-white/12 hover:backdrop-blur-md hover:border hover:border-white/20"
                     }`}
+                    style={{
+                      animation: activeTab === item.id ? `glow 2s ease-in-out infinite` : "none"
+                    }}
                   >
-                    <span className={`text-lg flex-shrink-0 transition-transform duration-200 ${activeTab === item.id ? "scale-110" : "group-hover:scale-110"}`}>
+                    <span className={`text-2xl flex-shrink-0 transition-all duration-300 ${activeTab === item.id ? "scale-125 drop-shadow-lg" : "group-hover:scale-110"}`}>
                       {item.icon}
                     </span>
-                    <span className="flex-1">{item.name}</span>
+                    <span className="flex-1 font-bold text-base tracking-wide">{item.name}</span>
                     {activeTab === item.id && (
-                      <span className="w-2 h-2 rounded-full bg-purple-400"></span>
+                      <div className="w-3 h-3 rounded-full bg-white shadow-lg shadow-white/50 animate-pulse"></div>
                     )}
                   </button>
                 ))}
               </nav>
 
               {/* Footer */}
-              <div className="flex-shrink-0 border-t border-white/10 p-4">
+              <div className="flex-shrink-0 border-t border-white/10 p-5 bg-gradient-to-t from-slate-900/50 to-transparent">
                 <SignOutButton />
               </div>
             </div>
 
             {/* Main Content */}
-            <div className="lg:pl-72 flex flex-col flex-1 overflow-hidden">
+            <div className="lg:pl-80 flex flex-col flex-1 overflow-hidden w-full bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900">
               <main className="flex-1 overflow-auto">
-                <div className="py-6 px-4 sm:px-6 lg:px-8">
+                <div className="py-4 px-3 sm:py-6 sm:px-6 lg:px-8 w-full">
                   {renderContent()}
                 </div>
               </main>
             </div>
           </div>
 
-          {/* Mobile Bottom Navigation */}
-          <div className="lg:hidden fixed bottom-0 left-0 right-0 bg-white/10 backdrop-blur-xl border-t border-white/20 z-40">
-            <div className="grid grid-cols-4 gap-1 p-2">
-              {mobileBottomNavItems.map((item) => (
-                <button
-                  key={item.id}
-                  onClick={() => setActiveTab(item.id)}
-                  className={`flex flex-col items-center justify-center py-3 rounded-lg transition-all duration-200 ${
-                    activeTab === item.id
-                      ? "bg-gradient-to-br from-purple-500/30 to-blue-500/20 text-white"
-                      : "text-white/60 hover:text-white hover:bg-white/10"
-                  }`}
-                >
-                  <span className="text-xl">{item.icon}</span>
-                  <span className="text-xs font-semibold mt-1">{item.name}</span>
-                </button>
-              ))}
-            </div>
-          </div>
-
-          {/* Mobile Menu Overlay */}
-          {isMobileMenuOpen && (
-            <div
-              className="lg:hidden fixed inset-0 bg-black bg-opacity-50 z-30"
-              onClick={() => setIsMobileMenuOpen(false)}
-            />
-          )}
+          {/* Mobile Menu Overlay Backdrop */}
         </div>
       </Authenticated>
     </>
