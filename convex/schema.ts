@@ -408,9 +408,68 @@ const applicationTables = {
       address: v.string(),
       website: v.optional(v.string()),
     })),
+    // Notification Sound Settings
+    notificationSounds: v.optional(v.object({
+      enabled: v.boolean(),
+      masterVolume: v.number(), // 0-1
+      customSounds: v.optional(v.object({
+        sale_success: v.optional(v.string()),
+        sale_complete: v.optional(v.string()),
+        refund_approved: v.optional(v.string()),
+        refund_rejected: v.optional(v.string()),
+        payment_received: v.optional(v.string()),
+        order_confirmed: v.optional(v.string()),
+        task_completed: v.optional(v.string()),
+        low_stock_warning: v.optional(v.string()),
+        high_discount_alert: v.optional(v.string()),
+        price_mismatch: v.optional(v.string()),
+        inventory_alert: v.optional(v.string()),
+        expiry_approaching: v.optional(v.string()),
+        customer_limit_warning: v.optional(v.string()),
+        payment_failed: v.optional(v.string()),
+        system_error: v.optional(v.string()),
+        critical_error: v.optional(v.string()),
+        critical_inventory: v.optional(v.string()),
+        transaction_error: v.optional(v.string()),
+        customer_credit_exceeded: v.optional(v.string()),
+        invalid_transaction: v.optional(v.string()),
+        new_customer: v.optional(v.string()),
+        large_order: v.optional(v.string()),
+        bulk_order: v.optional(v.string()),
+        bulk_sale: v.optional(v.string()),
+        vip_customer_purchase: v.optional(v.string()),
+        return_received: v.optional(v.string()),
+        supplier_delivery: v.optional(v.string()),
+        daily_target_reached: v.optional(v.string()),
+        monthly_milestone: v.optional(v.string()),
+        performance_boost: v.optional(v.string()),
+        unusual_activity: v.optional(v.string()),
+        system_check: v.optional(v.string()),
+        backup_complete: v.optional(v.string()),
+        countdown_timer: v.optional(v.string()),
+        shift_change: v.optional(v.string()),
+        employee_checkin: v.optional(v.string()),
+        customer_alert: v.optional(v.string()),
+        loyalty_earned: v.optional(v.string()),
+      })),
+    })),
     lastUpdated: v.number(),
     updatedBy: v.id("users"),
   }),
+
+  // Notification Sounds Library (custom sound files)
+  notificationSoundLibrary: defineTable({
+    soundType: v.string(), // Notification type (e.g., "sale_success")
+    soundName: v.string(), // Display name
+    soundData: v.string(), // Base64 encoded audio file
+    fileType: v.string(), // "audio/mp3", "audio/wav", "audio/ogg"
+    duration: v.number(), // Duration in seconds
+    uploadedBy: v.id("users"),
+    uploadedByName: v.string(),
+    uploadedAt: v.number(),
+    isActive: v.boolean(),
+  })
+    .index("by_sound_type", ["soundType"]),
 
   // Customer Reviews & Ratings
   customerReviews: defineTable({

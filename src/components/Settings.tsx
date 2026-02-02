@@ -7,6 +7,7 @@ import { BranchManagement } from "./BranchManagement";
 import { RuleBasedUserManagement } from "./RuleBasedUserManagement";
 import CustomerLoyalty from "./CustomerLoyalty";
 import CouponManagement from "./CouponManagement";
+import { NotificationSoundSettings } from "./NotificationSoundSettings";
 
 export default function Settings() {
   const [activeTab, setActiveTab] = useState("general");
@@ -51,6 +52,7 @@ export default function Settings() {
     { id: "store", name: "Store Info", icon: "🏪" },
     { id: "loyalty", name: "Loyalty & Rewards", icon: "🎁" },
     { id: "coupons", name: "Coupons", icon: "🎟️" },
+    { id: "notifications", name: "Notification Sounds", icon: "🎵" },
     { id: "barcode", name: "Barcode Settings", icon: "🏷️" },
     { id: "print", name: "Print Test", icon: "🖨️" },
     { id: "backup", name: "Backup & Restore", icon: "💾" },
@@ -1241,6 +1243,12 @@ export default function Settings() {
       {activeTab === "coupons" && (
         <div>
           <CouponManagement />
+        </div>
+      )}
+
+      {activeTab === "notifications" && (
+        <div>
+          <NotificationSoundSettings />
         </div>
       )}
 

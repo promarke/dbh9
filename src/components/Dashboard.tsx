@@ -1,13 +1,21 @@
 import { useQuery } from "convex/react";
 import { api } from "../../convex/_generated/api";
 import { useOfflineSync } from "../hooks/useOfflineSync";
+import { useCustomNotificationSounds } from "../hooks/useCustomNotificationSounds";
 import { useNotificationSystem, NotificationPresets } from "../hooks/useNotificationSystem";
 import { NotificationAlertsPanel, NotificationIcon, DashboardAlertsSummary } from "./NotificationAlertsPanel";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 
 export function Dashboard() {
   const [notificationPanelOpen, setNotificationPanelOpen] = useState(false);
   const { notify } = useNotificationSystem();
+  // Load custom notification sounds from settings
+  const { isLoaded: soundsLoaded } = useCustomNotificationSounds();
+  
+  // Track which products have been notified about to avoid duplicate notifications
+  const notifiedProductsRef = useRef<Set<string>>(new Set());
+  const notifiedCriticalRef = useRef<Set<string>>(new Set());
+  
   const products = useQuery(api.products.list, {}) || [];
   const sales = useQuery(api.sales.list, {}) || [];
   const categories = useQuery(api.categories.list) || [];
@@ -59,26 +67,43 @@ export function Dashboard() {
     .sort((a, b) => b.quantity - a.quantity)
     .slice(0, 5);
 
-  // Monitor and trigger notifications
+  // Monitor and trigger notifications (only once per product)
   useEffect(() => {
-    // Check for low stock
+    // Check for low stock - only notify once per product
     lowStockProducts.forEach(product => {
-      notify({
-        ...NotificationPresets.lowStock(product.name, product.currentStock),
-      });
+      if (!notifiedProductsRef.current.has(product._id)) {
+        notify({
+          ...NotificationPresets.lowStock(product.name, product.currentStock),
+        });
+        notifiedProductsRef.current.add(product._id);
+      }
     });
 
-    // Check for critical inventory
+    // Remove products that are no longer low stock from tracking
+    const lowStockIds = new Set(lowStockProducts.map(p => p._id));
+    notifiedProductsRef.current = new Set(
+      Array.from(notifiedProductsRef.current).filter(id => lowStockIds.has(id))
+    );
+
+    // Check for critical inventory - only notify once per product
     const criticalProducts = products.filter(p => p.currentStock <= 5);
     if (criticalProducts.length > 0) {
-      criticalProducts.slice(0, 1).forEach(product => {
+      const criticalProduct = criticalProducts[0];
+      if (!notifiedCriticalRef.current.has(criticalProduct._id)) {
         notify({
-          ...NotificationPresets.criticalInventory(product.name),
+          ...NotificationPresets.criticalInventory(criticalProduct.name),
         });
-      });
+        notifiedCriticalRef.current.add(criticalProduct._id);
+      }
     }
 
-    // Check today's sales performance
+    // Remove products that are no longer critical from tracking
+    const criticalIds = new Set(criticalProducts.map(p => p._id));
+    notifiedCriticalRef.current = new Set(
+      Array.from(notifiedCriticalRef.current).filter(id => criticalIds.has(id))
+    );
+
+    // Check today's sales performance - only notify once
     if (todayTotal > 0) {
       notify({
         ...NotificationPresets.saleSuccess(todayTotal),

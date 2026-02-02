@@ -20,23 +20,26 @@ export type NotificationSoundType =
   | 'expiry_approaching'
   | 'customer_limit_warning'
   
-  // 🔴 Critical/Error Events (13-18)
+  // 🔴 Critical/Error Events (13-19)
   | 'payment_failed'
   | 'system_error'
+  | 'critical_error'
   | 'critical_inventory'
   | 'transaction_error'
   | 'customer_credit_exceeded'
   | 'invalid_transaction'
+  | 'refund_rejected'
   
-  // 💼 Business Events (19-24)
+  // 💼 Business Events (20-25)
   | 'new_customer'
   | 'large_order'
+  | 'bulk_order'
   | 'bulk_sale'
   | 'vip_customer_purchase'
   | 'return_received'
   | 'supplier_delivery'
   
-  // 📊 Analytics & Monitoring (25-30)
+  // 📊 Analytics & Monitoring (26-31)
   | 'daily_target_reached'
   | 'monthly_milestone'
   | 'performance_boost'
@@ -90,6 +93,15 @@ export const SOUND_DEFINITIONS: Record<NotificationSoundType, NotificationSound>
     duration: 140,
     volume: 0.8,
     pattern: 'double',
+  },
+  refund_rejected: {
+    type: 'refund_rejected',
+    name: 'রিফান্ড প্রত্যাখ্যাত',
+    description: 'রিফান্ড প্রত্যাখ্যাত করা হয়েছে',
+    frequency: 400,
+    duration: 180,
+    volume: 0.95,
+    pattern: 'triple',
   },
   payment_received: {
     type: 'payment_received',
@@ -194,6 +206,15 @@ export const SOUND_DEFINITIONS: Record<NotificationSoundType, NotificationSound>
     volume: 1.0,
     pattern: 'triple',
   },
+  critical_error: {
+    type: 'critical_error',
+    name: 'গুরুতর ত্রুটি',
+    description: 'অত্যন্ত গুরুতর ত্রুটি ঘটেছে',
+    frequency: 320,
+    duration: 220,
+    volume: 1.0,
+    pattern: 'triple',
+  },
   critical_inventory: {
     type: 'critical_inventory',
     name: 'সংকটপূর্ণ ইনভেন্টরি',
@@ -249,6 +270,14 @@ export const SOUND_DEFINITIONS: Record<NotificationSoundType, NotificationSound>
     duration: 160,
     volume: 0.9,
     pattern: 'ascending',
+  },  bulk_order: {
+    type: 'bulk_order',
+    name: 'বাল্ক অর্ডার',
+    description: 'বড় পরিমাণে অর্ডার পাওয়া গেছে',
+    frequency: 880,
+    duration: 140,
+    volume: 0.85,
+    pattern: 'double',
   },
   bulk_sale: {
     type: 'bulk_sale',
@@ -394,6 +423,7 @@ export const SOUND_DEFINITIONS: Record<NotificationSoundType, NotificationSound>
 /**
  * Audio notification service using Web Audio API with advanced features
  * Supports ADSR envelopes, beep patterns, frequency modulation, and mobile optimization
+ * Also supports custom audio files for notifications
  */
 export class AudioNotificationService {
   private audioContext: AudioContext | null = null;
@@ -401,6 +431,9 @@ export class AudioNotificationService {
   private isMobileContext = false;
   private masterGainNode: GainNode | null = null;
   private beepGapMs = 150; // Gap between beeps in milliseconds
+  private customSounds: Map<NotificationSoundType, string> = new Map(); // Custom audio URLs/data
+  private audioBuffers: Map<NotificationSoundType, AudioBuffer> = new Map(); // Cached audio buffers
+  private masterVolume = 0.8;
 
   constructor() {
     this.initAudioContext();
@@ -425,8 +458,8 @@ export class AudioNotificationService {
             // Detect if mobile
             this.isMobileContext = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
 
-            // Resume audio context on user interaction for mobile
-            if (this.isMobileContext && this.audioContext.state === 'suspended') {
+            // Resume audio context on user interaction (mobile and desktop)
+            if (this.audioContext.state === 'suspended') {
               const resumeAudio = () => {
                 this.audioContext?.resume().then(() => {
                   document.removeEventListener('click', resumeAudio);
@@ -445,16 +478,10 @@ export class AudioNotificationService {
   }
 
   /**
-   * Play a notification sound with beep patterns
+   * Play a notification sound with beep patterns or custom audio
    */
   play(soundType: NotificationSoundType, repeat: boolean = false) {
     if (!this.isEnabled || !this.audioContext || !this.masterGainNode) {
-      return;
-    }
-
-    const sound = SOUND_DEFINITIONS[soundType];
-    if (!sound) {
-      console.warn(`Sound type not found: ${soundType}`);
       return;
     }
 
@@ -462,6 +489,20 @@ export class AudioNotificationService {
       // Resume audio context if suspended (mobile)
       if (this.audioContext.state === 'suspended') {
         this.audioContext.resume();
+      }
+
+      // Check if custom sound exists for this type
+      const customSoundUrl = this.customSounds.get(soundType);
+      if (customSoundUrl) {
+        this.playCustomSound(soundType, customSoundUrl);
+        return;
+      }
+
+      // Fall back to beep pattern
+      const sound = SOUND_DEFINITIONS[soundType];
+      if (!sound) {
+        console.warn(`Sound type not found: ${soundType}`);
+        return;
       }
 
       // Play beep pattern
@@ -495,6 +536,96 @@ export class AudioNotificationService {
     } catch (error) {
       console.error('Error playing sound:', error);
     }
+  }
+
+  /**
+   * Play custom audio file - truncate to max 2 seconds for preview
+   */
+  private async playCustomSound(soundType: NotificationSoundType, audioUrl: string) {
+    if (!this.audioContext || !this.masterGainNode) return;
+
+    try {
+      let audioBuffer = this.audioBuffers.get(soundType);
+
+      // Load audio if not cached
+      if (!audioBuffer) {
+        audioBuffer = await this.loadAudioFile(audioUrl);
+        if (audioBuffer) {
+          this.audioBuffers.set(soundType, audioBuffer);
+        } else {
+          return;
+        }
+      }
+
+      // Create source and play
+      const source = this.audioContext.createBufferSource();
+      source.buffer = audioBuffer;
+      source.connect(this.masterGainNode);
+      
+      // For preview/testing, limit to 2 seconds max
+      const maxDuration = Math.min(2, audioBuffer.duration);
+      const now = this.audioContext.currentTime;
+      
+      source.start(0, 0, maxDuration);
+    } catch (error) {
+      console.error('Error playing custom sound:', error);
+    }
+  }
+
+  /**
+   * Load audio file from URL or base64
+   */
+  private async loadAudioFile(audioUrl: string): Promise<AudioBuffer | null> {
+    if (!this.audioContext) return null;
+
+    try {
+      const response = await fetch(audioUrl);
+      const arrayBuffer = await response.arrayBuffer();
+      const audioBuffer = await this.audioContext.decodeAudioData(arrayBuffer);
+      return audioBuffer;
+    } catch (error) {
+      console.error('Error loading audio file:', error);
+      return null;
+    }
+  }
+
+  /**
+   * Register a custom sound for a notification type
+   */
+  setCustomSound(soundType: NotificationSoundType, audioUrl: string) {
+    this.customSounds.set(soundType, audioUrl);
+    // Clear cached buffer so new version will be loaded
+    this.audioBuffers.delete(soundType);
+    console.log(`✅ Custom sound registered for ${soundType}`);
+  }
+
+  /**
+   * Remove custom sound (fall back to beep)
+   */
+  removeCustomSound(soundType: NotificationSoundType) {
+    this.customSounds.delete(soundType);
+    this.audioBuffers.delete(soundType);
+    console.log(`✅ Custom sound removed for ${soundType}`);
+  }
+
+  /**
+   * Get all registered custom sounds
+   */
+  getCustomSounds(): Record<string, string> {
+    const result: Record<string, string> = {};
+    this.customSounds.forEach((url, type) => {
+      result[type] = url;
+    });
+    return result;
+  }
+
+  /**
+   * Clear all custom sounds
+   */
+  clearCustomSounds() {
+    this.customSounds.clear();
+    this.audioBuffers.clear();
+    console.log("✅ All custom sounds cleared");
   }
 
   /**
@@ -582,9 +713,17 @@ export class AudioNotificationService {
    * Set master volume
    */
   setVolume(level: number) {
+    this.masterVolume = Math.max(0, Math.min(1, level));
     if (this.masterGainNode) {
-      this.masterGainNode.gain.value = Math.max(0, Math.min(1, level));
+      this.masterGainNode.gain.value = this.masterVolume;
     }
+  }
+
+  /**
+   * Get current master volume
+   */
+  getVolume(): number {
+    return this.masterVolume;
   }
 
   /**
