@@ -3,7 +3,6 @@
 
 import React, { useState, useCallback, useEffect } from 'react';
 import { useQuery } from 'convex/react';
-import { api } from '../../convex/_generated/api';
 import { Camera, ImagePlus, Settings, Home, BarChart3, Trophy, FileText, Package, Sliders } from 'lucide-react';
 import { toast } from 'sonner';
 import { ProductScanner } from './ProductScanner';
@@ -247,7 +246,67 @@ export const StaffProductPortal: React.FC = () => {
 
             {/* দ্রুত অ্যাক্সেস কার্ড */}
             <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
-              {/* ... rest of home view ... */}
+              <div className="bg-white rounded-lg shadow p-6 border-t-4 border-indigo-500">
+                <Sliders className="w-8 h-8 text-indigo-500 mb-2" />
+                <h3 className="font-bold text-gray-800 mb-2">ফিচার সেটিংস</h3>
+                <p className="text-sm text-gray-600 mb-3">
+                  সব ফিচার দেখুন
+                </p>
+                <button
+                  onClick={() => setViewState('feature-dashboard')}
+                  className="text-sm text-indigo-600 hover:text-indigo-700 font-semibold"
+                >
+                  খুলুন →
+                </button>
+              </div>
+
+              <div className="bg-white rounded-lg shadow p-6 border-t-4 border-cyan-500">
+                <Package className="w-8 h-8 text-cyan-500 mb-2" />
+                <h3 className="font-bold text-gray-800 mb-2">পণ্য মডিউল</h3>
+                <p className="text-sm text-gray-600 mb-3">
+                  সম্পূর্ণ পরিচালনা
+                </p>
+                <button
+                  onClick={() => setViewState('product-detail-module')}
+                  className="text-sm text-cyan-600 hover:text-cyan-700 font-semibold"
+                >
+                  খুলুন →
+                </button>
+              </div>
+
+              <div className="bg-white rounded-lg shadow p-6 border-t-4 border-blue-500">
+                <BarChart3 className="w-8 h-8 text-blue-500 mb-2" />
+                <h3 className="font-bold text-gray-800 mb-2">স্ট্যাটিস্টিক্স</h3>
+                <p className="text-sm text-gray-600 mb-3">
+                  মোট স্ক্যান: <span className="font-bold">0</span>
+                </p>
+                <button
+                  onClick={() => setViewState('statistics')}
+                  className="text-sm text-blue-600 hover:text-blue-700 font-semibold"
+                >
+                  দেখুন →
+                </button>
+              </div>
+
+              <div className="bg-white rounded-lg shadow p-6 border-t-4 border-green-500">
+                <ImagePlus className="w-8 h-8 text-green-500 mb-2" />
+                <h3 className="font-bold text-gray-800 mb-2">আপলোড করা ছবি</h3>
+                <p className="text-sm text-gray-600 mb-3">
+                  মোট: <span className="font-bold">{productImages.length}</span>
+                </p>
+              </div>
+
+              <div className="bg-white rounded-lg shadow p-6 border-t-4 border-yellow-500">
+                <Trophy className="w-8 h-8 text-yellow-500 mb-2" />
+                <h3 className="font-bold text-gray-800 mb-2">লিডারবোর্ড</h3>
+                <p className="text-sm text-gray-600 mb-3">প্রতিযোগিতা</p>
+                <button
+                  onClick={() => setViewState('leaderboard')}
+                  className="text-sm text-yellow-600 hover:text-yellow-700 font-semibold"
+                >
+                  র‍্যাঙ্কিং →
+                </button>
+              </div>
             </div>
           </div>
         )}
