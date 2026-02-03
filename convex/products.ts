@@ -131,7 +131,7 @@ export const listActive = query({
       barcode: p.barcode,
       rating: 4.5, // Default rating
       reviews: 100, // Default reviews
-      imageUrl: p.imageUrl || 'https://via.placeholder.com/300x400?text=পণ্য',
+      imageUrl: p.pictureUrl || 'https://via.placeholder.com/300x400?text=পণ্য',
       description: p.description,
     }));
   },
