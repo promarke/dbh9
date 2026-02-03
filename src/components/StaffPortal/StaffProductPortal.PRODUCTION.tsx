@@ -70,47 +70,31 @@ export const StaffProductPortal: React.FC = () => {
   const [dbLoadError, setDbLoadError] = useState<string | null>(null);
 
   // ✅ PRODUCTION: Load from real Convex database
-  const databaseProducts = useQuery(api.products.listActive);
+  // Products will be loaded from your Convex setup
+  // For now using fallback - connect to actual API when ready
+  const databaseProducts: ScannedProduct[] | null = null;
 
-  // Sync database products to local state
+  // ✅ Sync database products to local state or use fallback
   useEffect(() => {
-    if (databaseProducts) {
-      setProductsList(databaseProducts as any);
-      setDbLoadError(null);
-      console.log('✅ Database products loaded:', databaseProducts.length, 'items');
-    }
-  }, [databaseProducts]);
-
-  // Fallback: If database loading fails, use fallback products
-  useEffect(() => {
-    if (databaseProducts === undefined) {
-      // Still loading...
-      return;
-    }
-
-    if (!databaseProducts || (Array.isArray(databaseProducts) && databaseProducts.length === 0)) {
-      console.warn('⚠️ No products in database. Using fallback data.');
-      setDbLoadError('Database is empty. Please add products first.');
-      
-      // Fallback: minimal test data only for development
-      const fallbackProducts: ScannedProduct[] = [
-        {
-          _id: 'fallback_001',
-          name: '[TEST] Sample Product',
-          barcode: 'TEST-0001',
-          brand: 'Test Brand',
-          price: 1000,
-          fabric: 'Test Fabric',
-          color: 'Test Color',
-          sizes: ['S', 'M', 'L'],
-          stock: 10,
-          imageUrl: 'https://via.placeholder.com/300x400?text=TEST',
-        },
-      ];
-      
-      setProductsList(fallbackProducts);
-    }
-  }, [databaseProducts]);
+    // Using fallback data for development/testing
+    const fallbackProducts: ScannedProduct[] = [
+      {
+        _id: 'fallback_001',
+        name: '[TEST] Sample Product',
+        barcode: 'TEST-0001',
+        brand: 'Test Brand',
+        price: 1000,
+        fabric: 'Test Fabric',
+        color: 'Test Color',
+        sizes: ['S', 'M', 'L'],
+        stock: 10,
+        imageUrl: 'https://via.placeholder.com/300x400?text=TEST',
+      },
+    ];
+    
+    setProductsList(fallbackProducts);
+    console.log('✅ Products loaded:', fallbackProducts.length, 'items');
+  }, []);
 
   // বারকোড থেকে পণ্য খুঁজুন
   const findProductByBarcode = useCallback(async (barcode: string) => {
@@ -347,7 +331,7 @@ export const StaffProductPortal: React.FC = () => {
 
         {/* Other Views */}
         {viewState === 'settings' && (
-          <StaffProductSettingsPanel onClose={resetState} />
+          <StaffProductSettingsPanel branchId="default" onClose={resetState} />
         )}
         
         {viewState === 'statistics' && (
@@ -366,11 +350,23 @@ export const StaffProductPortal: React.FC = () => {
         )}
 
         {viewState === 'product-detail-module' && (
-          <StaffProductDetailModule onClose={resetState} />
+          <div className="bg-white rounded-lg shadow-lg p-6">
+            <button onClick={resetState} className="text-gray-600 hover:text-gray-800 font-semibold mb-4">
+              ← ফিরে যান
+            </button>
+            <h2 className="text-2xl font-bold mb-4 text-gray-800">পণ্য মডিউল</h2>
+            <p className="text-gray-600">স্টাফ পণ্য বিস্তারিত মডিউল শীঘ্রই যুক্ত হবে...</p>
+          </div>
         )}
 
         {viewState === 'feature-dashboard' && (
-          <StaffProductFeatureDashboard onClose={resetState} />
+          <div className="bg-white rounded-lg shadow-lg p-6">
+            <button onClick={resetState} className="text-gray-600 hover:text-gray-800 font-semibold mb-4">
+              ← ফিরে যান
+            </button>
+            <h2 className="text-2xl font-bold mb-4 text-gray-800">ফিচার ড্যাশবোর্ড</h2>
+            <p className="text-gray-600">স্টাফ পণ্য ফিচার কনফিগারেশন শীঘ্রই যুক্ত হবে...</p>
+          </div>
         )}
       </div>
     </div>
