@@ -39,6 +39,8 @@ import type * as roleSeed from "../roleSeed.js";
 import type * as router from "../router.js";
 import type * as sales from "../sales.js";
 import type * as settings from "../settings.js";
+import type * as staffProductImages from "../staffProductImages.js";
+import type * as staffProductSettings from "../staffProductSettings.js";
 import type * as stockManagement from "../stockManagement.js";
 import type * as stockTransfer from "../stockTransfer.js";
 import type * as userManagement from "../userManagement.js";
@@ -81,6 +83,8 @@ declare const fullApi: ApiFromModules<{
   router: typeof router;
   sales: typeof sales;
   settings: typeof settings;
+  staffProductImages: typeof staffProductImages;
+  staffProductSettings: typeof staffProductSettings;
   stockManagement: typeof stockManagement;
   stockTransfer: typeof stockTransfer;
   userManagement: typeof userManagement;

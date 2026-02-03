@@ -1513,6 +1513,115 @@ const applicationTables = {
     lastUpdated: v.number(),
   })
     .index("by_branch", ["branchId"]),
+
+  // Staff Product Images (Phase 2)
+  staffProductImages: defineTable({
+    productId: v.id("products"),
+    barcode: v.string(),
+    serialNumber: v.string(), // DBH-0001 format
+    variantId: v.number(), // 1-100
+    uploadedBy: v.id("users"), // Staff member who uploaded
+    uploadedByName: v.string(),
+    uploadedAt: v.number(),
+    
+    // Image metadata
+    imageUrl: v.string(), // Cloudinary or storage URL
+    imageKey: v.string(), // Storage key for reference
+    originalSize: v.number(), // Bytes
+    compressedSize: v.number(), // Bytes
+    compressionRatio: v.number(), // Percentage
+    format: v.string(), // "JPEG", "PNG", etc.
+    
+    // Additional info
+    description: v.optional(v.string()), // Staff's description
+    tags: v.array(v.string()), // For categorization
+    position: v.number(), // 1, 2, or 3 (max 3 images per variant)
+    
+    // Engagement
+    viewCount: v.number(),
+    likes: v.number(),
+    isApproved: v.boolean(), // Manager approval
+    approvedBy: v.optional(v.id("users")),
+    approvedAt: v.optional(v.number()),
+    
+    // Metadata for search
+    branchId: v.id("branches"),
+    branchName: v.string(),
+  })
+    .index("by_product", ["productId"])
+    .index("by_barcode", ["barcode"])
+    .index("by_serial", ["serialNumber"])
+    .index("by_variant", ["variantId"])
+    .index("by_staff", ["uploadedBy"])
+    .index("by_branch", ["branchId"])
+    .index("by_approved", ["isApproved"])
+    .index("by_date", ["uploadedAt"]),
+
+  // Staff Product Activity Log (Phase 2)
+  staffProductActivity: defineTable({
+    staffId: v.id("users"),
+    staffName: v.string(),
+    branchId: v.id("branches"),
+    branchName: v.string(),
+    
+    productId: v.optional(v.id("products")),
+    productName: v.optional(v.string()),
+    barcode: v.optional(v.string()),
+    serialNumber: v.optional(v.string()),
+    variantId: v.optional(v.number()),
+    
+    action: v.string(), // "scan", "image_upload", "image_delete", "note_added", "view"
+    details: v.optional(v.object({
+      imageId: v.optional(v.string()),
+      imageUrl: v.optional(v.string()),
+      fileName: v.optional(v.string()),
+      errorMessage: v.optional(v.string()),
+      noteText: v.optional(v.string()),
+    })),
+    
+    timestamp: v.number(),
+    status: v.string(), // "success", "failed", "pending"
+  })
+    .index("by_staff", ["staffId"])
+    .index("by_branch", ["branchId"])
+    .index("by_product", ["productId"])
+    .index("by_action", ["action"])
+    .index("by_timestamp", ["timestamp"]),
+
+  // Staff Product Settings (Phase 3)
+  staffProductSettings: defineTable({
+    branchId: v.id("branches"),
+    
+    // Image settings
+    imageCompressionEnabled: v.boolean(),
+    targetImageSize: v.number(), // 100 = 100KB
+    jpegQuality: v.number(), // 75-90
+    maxImagesPerProduct: v.number(), // Usually 3
+    allowImageDeletion: v.boolean(),
+    enableAutoRotate: v.boolean(),
+    autoDeleteOldImages: v.number(), // days (0 = disable)
+    
+    // Scanner settings
+    enableFlashSupport: v.boolean(),
+    continuousScan: v.boolean(),
+    soundNotifications: v.boolean(),
+    vibrationFeedback: v.boolean(),
+    
+    // Permissions
+    canView: v.array(v.string()), // Roles that can view
+    canUpload: v.array(v.string()), // Roles that can upload
+    canDelete: v.array(v.string()), // Roles that can delete
+    canApprove: v.array(v.string()), // Roles that can approve
+    
+    // Features
+    enableCollaborativeNotes: v.boolean(),
+    enableImageLiking: v.boolean(),
+    enableDailyReport: v.boolean(),
+    
+    updatedBy: v.id("users"),
+    updatedAt: v.number(),
+  })
+    .index("by_branch", ["branchId"]),
 };
 
 
