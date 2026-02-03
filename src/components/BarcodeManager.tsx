@@ -10,19 +10,113 @@ export default function BarcodeManager() {
   const [selectedProducts, setSelectedProducts] = useState<Id<"products">[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedCategory, setSelectedCategory] = useState<Id<"categories"> | undefined>();
+  const [serialNumbers, setSerialNumbers] = useState<Map<string, string>>(new Map());
+  const [serialNumberCounter, setSerialNumberCounter] = useState(0); // Sequential counter
+  const [variantMap, setVariantMap] = useState<Map<string, number>>(new Map()); // Product combo -> Variant ID
+  const [variantCounter, setVariantCounter] = useState(0); // Variant ID counter (1-100)
+  const [productVariants, setProductVariants] = useState<Map<string, number>>(new Map()); // Product ID -> Variant ID
+  const [availableSerialNumbers, setAvailableSerialNumbers] = useState<string[]>([]);
+  const [usedSerialNumbers, setUsedSerialNumbers] = useState<Set<string>>(new Set());
   const [printSettings, setPrintSettings] = useState({
     printerType: "pos", // pos or regular
     stickerWidth: 1.5, // inches
     stickerHeight: 1.0, // inches
     gapBetweenStickers: 10, // pixels
     fontSize: 8,
+    productNameFontSize: 8,
+    productSizeFontSize: 10,
+    serialNumberFontSize: 7,
     includePrice: true,
     includeName: true,
     includeSize: false,
     includeMadeBy: true,
+    includeSerialNumber: true,
     stickersPerRow: 2,
     paperWidth: 4, // inches for POS printer
+    customSizeDisplay: "", // Custom size display text
   });
+
+  // Generate all possible serial numbers pool (DBH-0001 to DBH-9999, then A0001 to Z9999)
+  // Generate serial number pool (deprecated - using sequential system now)
+  // This function is kept for backward compatibility but not actively used
+  const generateSerialNumberPool = useCallback((): string[] => {
+    const pool: string[] = [];
+    
+    // Add DBH-0001 to DBH-9999
+    for (let i = 1; i <= 9999; i++) {
+      pool.push(`DBH-${String(i).padStart(4, '0')}`);
+    }
+    
+    // Add A0001 to Z9999 (A-Z with 0001-9999)
+    const letters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('');
+    for (const letter of letters) {
+      for (let i = 1; i <= 9999; i++) {
+        pool.push(`${letter}${String(i).padStart(4, '0')}`);
+      }
+    }
+    
+    // Shuffle the pool for randomness
+    for (let i = pool.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [pool[i], pool[j]] = [pool[j], pool[i]];
+    }
+    
+    return pool;
+  }, []);
+
+  // Initialize serial number pool on mount
+  useEffect(() => {
+    const savedCounter = localStorage.getItem("serialNumberCounter");
+    const savedSerialNumbers = localStorage.getItem("productSerialNumbers");
+    const savedVariantMap = localStorage.getItem("variantMap");
+    const savedVariantCounter = localStorage.getItem("variantCounter");
+    const savedProductVariants = localStorage.getItem("productVariants");
+    
+    if (savedCounter) {
+      try {
+        setSerialNumberCounter(Number(JSON.parse(savedCounter)));
+      } catch (error) {
+        console.error("Error loading serial counter:", error);
+        setSerialNumberCounter(0);
+      }
+    }
+    
+    if (savedSerialNumbers) {
+      try {
+        const map = new Map(Object.entries(JSON.parse(savedSerialNumbers)));
+        setSerialNumbers(map);
+      } catch (error) {
+        console.error("Error loading serial numbers:", error);
+      }
+    }
+    
+    if (savedVariantMap) {
+      try {
+        const map = new Map(JSON.parse(savedVariantMap));
+        setVariantMap(map);
+      } catch (error) {
+        console.error("Error loading variant map:", error);
+      }
+    }
+    
+    if (savedVariantCounter) {
+      try {
+        setVariantCounter(Number(JSON.parse(savedVariantCounter)));
+      } catch (error) {
+        console.error("Error loading variant counter:", error);
+        setVariantCounter(0);
+      }
+    }
+    
+    if (savedProductVariants) {
+      try {
+        const map = new Map(JSON.parse(savedProductVariants));
+        setProductVariants(map);
+      } catch (error) {
+        console.error("Error loading product variants:", error);
+      }
+    }
+  }, []);
 
   // Load print settings from localStorage on mount
   useEffect(() => {
@@ -36,19 +130,57 @@ export default function BarcodeManager() {
     }
   }, []);
 
+  // Save print settings to localStorage whenever they change
+  useEffect(() => {
+    localStorage.setItem("printSettings", JSON.stringify(printSettings));
+  }, [printSettings]);
+
   const products = useQuery(api.products.list, { 
-    categoryId: selectedCategory,
-    searchTerm: searchTerm || undefined 
+    categoryId: selectedCategory
   });
   const categories = useQuery(api.categories.list);
 
   // Memoized filtered products for performance
   const filteredProducts = useMemo(() => {
     if (!products) return [];
-    return selectedProducts.length === 0 
-      ? products 
+    
+    // Load serial and variant data from localStorage
+    const serialNumberMapStr = localStorage.getItem("productSerialNumbers") || "{}";
+    const productVariantsStr = localStorage.getItem("productVariants") || "{}";
+    
+    const serialNumberMap = new Map<string, string>(Object.entries(JSON.parse(serialNumberMapStr)));
+    const productVariantsMap = new Map<string, number>(Object.entries(JSON.parse(productVariantsStr)));
+    
+    // First filter by selected products or category
+    let filtered = selectedProducts.length === 0 
+      ? (selectedCategory ? products.filter(p => p.categoryId === selectedCategory) : products)
       : products.filter(product => selectedProducts.includes(product._id));
-  }, [products, selectedProducts]);
+    
+    // Then apply search filter
+    if (searchTerm) {
+      const searchLower = searchTerm.toLowerCase();
+      filtered = filtered.filter(product => {
+        // Check standard search fields
+        const matchesStandardSearch = 
+          product.name.toLowerCase().includes(searchLower) ||
+          product.brand?.toLowerCase().includes(searchLower) ||
+          product.productCode?.toLowerCase().includes(searchLower) ||
+          product.barcode?.toLowerCase().includes(searchLower);
+        
+        // Check serial number search
+        const serialNumber = serialNumberMap.get(product._id);
+        const matchesSerialNumber = serialNumber && serialNumber.toLowerCase().includes(searchLower);
+        
+        // Check variant ID search
+        const variantId = productVariantsMap.get(product._id);
+        const matchesVariantId = variantId && variantId.toString().includes(searchLower);
+        
+        return matchesStandardSearch || matchesSerialNumber || matchesVariantId;
+      });
+    }
+    
+    return filtered;
+  }, [products, selectedProducts, selectedCategory, searchTerm]);
 
   // Optimized callback functions
   const toggleProductSelection = useCallback((productId: Id<"products">) => {
@@ -69,10 +201,152 @@ export default function BarcodeManager() {
     setSelectedProducts([]);
   }, []);
 
+  // Get next sequential serial number
+  const getNextSequentialSerialNumber = useCallback((): string => {
+    // Read current counter directly from localStorage to ensure consistency
+    const counterStr = localStorage.getItem("serialNumberCounter") || "0";
+    const currentCounter = Number(JSON.parse(counterStr));
+    const newCounter = currentCounter + 1;
+    
+    // Update state
+    setSerialNumberCounter(newCounter);
+    
+    // Save immediately to localStorage
+    localStorage.setItem("serialNumberCounter", JSON.stringify(newCounter));
+    
+    return `DBH-${String(newCounter).padStart(4, '0')}`;
+  }, []);
+
+  // Get or create variant ID for a product combination
+  const getVariantId = useCallback((product: any): number => {
+    // Create a unique key from product attributes
+    const variantKey = `${product.name}|${product.color}|${product.sizes?.join(',') || ''}|${product.material || ''}|${product.embellishments || ''}`;
+    
+    // Load current maps from localStorage for consistency
+    const variantMapStr = localStorage.getItem("variantMap") || "{}";
+    const variantCounterStr = localStorage.getItem("variantCounter") || "0";
+    const productVariantsStr = localStorage.getItem("productVariants") || "{}";
+    
+    const currentVariantMap = new Map<string, number>(Object.entries(JSON.parse(variantMapStr)));
+    const currentVariantCounter = Number(JSON.parse(variantCounterStr));
+    const currentProductVariants = new Map<string, number>(Object.entries(JSON.parse(productVariantsStr)));
+    
+    // Check if variant already exists
+    if (currentVariantMap.has(variantKey)) {
+      const variantId = currentVariantMap.get(variantKey)!;
+      currentProductVariants.set(product._id, variantId);
+      setProductVariants(currentProductVariants);
+      localStorage.setItem("productVariants", JSON.stringify(Object.fromEntries(currentProductVariants)));
+      return variantId;
+    }
+    
+    // Create new variant if we haven't reached 100
+    if (currentVariantCounter < 100) {
+      const newVariantId = currentVariantCounter + 1;
+      
+      currentVariantMap.set(variantKey, newVariantId);
+      currentProductVariants.set(product._id, newVariantId);
+      
+      setVariantCounter(newVariantId);
+      setVariantMap(currentVariantMap);
+      setProductVariants(currentProductVariants);
+      
+      // Save to localStorage
+      localStorage.setItem("variantMap", JSON.stringify(Object.fromEntries(currentVariantMap)));
+      localStorage.setItem("variantCounter", JSON.stringify(newVariantId));
+      localStorage.setItem("productVariants", JSON.stringify(Object.fromEntries(currentProductVariants)));
+      
+      return newVariantId;
+    }
+    
+    // Fallback if 100 variants reached
+    toast.error("Maximum 100 variants reached! Please reset the variant system.");
+    return 100;
+  }, []);
+
+  // Function to get next available serial number from pool
+  // Note: This function is deprecated - using sequential serial numbers instead
+  // Kept for backward compatibility but should not be used in new code
+  const getNextSerialNumber = useCallback((): string | null => {
+    if (availableSerialNumbers.length === 0) {
+      return null; // Pool exhausted
+    }
+    
+    const nextSerial = availableSerialNumbers[0];
+    const newAvailable = availableSerialNumbers.slice(1);
+    
+    setAvailableSerialNumbers(newAvailable);
+    setUsedSerialNumbers(prev => new Set([...prev, nextSerial]));
+    
+    // Save updated states to localStorage
+    localStorage.setItem("serialNumberPool", JSON.stringify(newAvailable));
+    localStorage.setItem("usedSerialNumbers", JSON.stringify(Array.from(new Set([...Array.from(usedSerialNumbers), nextSerial]))));
+    
+    return nextSerial;
+  }, [availableSerialNumbers, usedSerialNumbers]);
+
+  // Function to get or create serial number for a product
+  const getProductSerialNumber = useCallback((productId: string): string => {
+    // Load from localStorage for consistency
+    const serialNumbersStr = localStorage.getItem("productSerialNumbers") || "{}";
+    const currentSerialNumbers = new Map<string, string>(Object.entries(JSON.parse(serialNumbersStr)));
+    
+    // Check if product already has a serial number
+    if (currentSerialNumbers.has(productId)) {
+      return currentSerialNumbers.get(productId)!;
+    }
+    
+    // Get next sequential serial number
+    const newSerialNumber = getNextSequentialSerialNumber();
+    currentSerialNumbers.set(productId, newSerialNumber);
+    
+    // Update state
+    setSerialNumbers(currentSerialNumbers);
+    
+    // Save to localStorage
+    localStorage.setItem("productSerialNumbers", JSON.stringify(Object.fromEntries(currentSerialNumbers)));
+    
+    return newSerialNumber;
+  }, [getNextSequentialSerialNumber]);
+
+  // Function to reset serial and variant systems
+  const resetSerialNumberSystem = useCallback(() => {
+    if (window.confirm("Reset Serial Number System? This will reset the counter to 0.")) {
+      setSerialNumberCounter(0);
+      setSerialNumbers(new Map());
+      
+      localStorage.setItem("serialNumberCounter", JSON.stringify(0));
+      localStorage.removeItem("productSerialNumbers");
+      
+      toast.success("Serial number system has been reset!");
+    }
+  }, []);
+
+  // Function to reset variant system
+  const resetVariantSystem = useCallback(() => {
+    if (window.confirm("Reset Variant System? This will clear all variant mappings and reset counter to 0.")) {
+      setVariantMap(new Map());
+      setVariantCounter(0);
+      setProductVariants(new Map());
+      
+      localStorage.removeItem("variantMap");
+      localStorage.removeItem("variantCounter");
+      localStorage.removeItem("productVariants");
+      
+      toast.success("Variant system has been reset!");
+    }
+  }, []);
+
   // Memoized barcode generation with caching
   const barcodeCache = useRef(new Map<string, string>());
   
   const generateBarcode = useCallback((text: string): string => {
+    // Validate input
+    if (!text || text.trim().length === 0) {
+      console.warn('Empty barcode text provided');
+      return generateFallbackBarcode('INVALID');
+    }
+
     if (barcodeCache.current.has(text)) {
       return barcodeCache.current.get(text)!;
     }
@@ -139,6 +413,14 @@ export default function BarcodeManager() {
       return;
     }
 
+    // Validate all selected products have barcodes
+    const productsWithoutBarcodes = selectedProductsData.filter(p => !p.barcode || p.barcode.trim().length === 0);
+    if (productsWithoutBarcodes.length > 0) {
+      const names = productsWithoutBarcodes.map(p => p.name).join(", ");
+      toast.error(`The following products have no barcode: ${names}`);
+      return;
+    }
+
     const printWindow = window.open('', '_blank');
     if (!printWindow) {
       toast.error("Please allow popups to print barcodes");
@@ -190,7 +472,7 @@ export default function BarcodeManager() {
               width: ${stickerWidthPx}px;
               height: ${stickerHeightPx}px;
               border: 1px solid #000;
-              padding: 4px;
+              padding: 2px;
               box-sizing: border-box;
               display: flex;
               flex-direction: column;
@@ -209,8 +491,8 @@ export default function BarcodeManager() {
               color: #000;
               text-transform: uppercase;
               letter-spacing: 0.5px;
-              line-height: 1.1;
-              margin-bottom: 3px;
+              line-height: 1.2;
+              margin-bottom: 2px;
               white-space: nowrap;
               overflow: hidden;
               text-overflow: ellipsis;
@@ -220,26 +502,30 @@ export default function BarcodeManager() {
             .barcode-image {
               max-width: 95%;
               height: auto;
-              max-height: 35px;
-              margin: 2px 0;
+              max-height: 32px;
+              margin: 1px 0;
             }
             .product-name {
               font-weight: normal;
-              font-size: 10px;
+              font-size: ${printSettings.productNameFontSize}px;
               margin: 2px 0;
               overflow: hidden;
               text-overflow: ellipsis;
               white-space: nowrap;
               width: 100%;
-              line-height: 1.1;
+              line-height: 1.2;
               text-align: center;
               color: #000;
             }
             .bottom-info {
               display: flex;
-              justify-content: flex-end;
+              justify-content: space-between;
+              align-items: center;
               width: 100%;
               margin-top: auto;
+              gap: 2px;
+              margin: 0px 0;
+              line-height: 1;
             }
             .product-price {
               color: #000;
@@ -248,6 +534,7 @@ export default function BarcodeManager() {
               margin: 2px 0;
               text-align: center;
               width: 100%;
+              line-height: 1.2;
             }
             .made-by {
               color: #666;
@@ -255,18 +542,63 @@ export default function BarcodeManager() {
               white-space: nowrap;
               overflow: hidden;
               text-overflow: ellipsis;
-              width: 100%;
               text-align: right;
-              margin-top: auto;
+              line-height: 1;
             }
-            .product-size {
-              font-size: ${printSettings.fontSize - 3}px;
+            .serial-number {
+              font-size: ${printSettings.serialNumberFontSize}px;
               color: #333;
-              margin: 1px 0;
               white-space: nowrap;
               overflow: hidden;
               text-overflow: ellipsis;
+              font-family: 'Courier New', monospace;
+              text-align: left;
+              line-height: 1;
+            }
+            .product-size {
+              font-size: ${printSettings.productSizeFontSize}px;
+              color: #333;
+              margin: 0px 0;
+              white-space: nowrap;
+              overflow: hidden;
+              text-overflow: ellipsis;
+              flex: 1;
+              text-align: left;
+              line-height: 1;
+            }
+            .size-color-row {
+              display: flex;
+              justify-content: space-between;
+              align-items: center;
               width: 100%;
+              margin: 0px 0;
+              gap: 2px;
+              line-height: 1;
+            }
+            .product-color {
+              font-size: ${printSettings.productSizeFontSize}px;
+              color: #333;
+              white-space: nowrap;
+              overflow: hidden;
+              text-overflow: ellipsis;
+              text-align: right;
+              line-height: 1;
+              flex: 1;
+            }
+            .variant-circle {
+              width: 28px;
+              height: 28px;
+              border-radius: 50%;
+              background: transparent;
+              display: flex;
+              align-items: center;
+              justify-content: center;
+              margin: 0px auto;
+              font-weight: bold;
+              font-size: 13px;
+              color: #7c3aed;
+              border: 2px solid #7c3aed;
+              line-height: 1;
             }
             .print-controls {
               position: fixed;
@@ -336,12 +668,32 @@ export default function BarcodeManager() {
     const stickersPerRow = Math.floor(paperWidthPx / (stickerWidthPx + gap));
     const actualStickersPerRow = Math.min(stickersPerRow, printSettings.stickersPerRow);
 
+    // Filter products with valid barcodes for accurate count
+    const validProducts = selectedProductsData.filter(p => p.barcode && p.barcode.trim().length > 0);
+    let stickerCount = 0;
+
     for (let i = 0; i < selectedProductsData.length; i += actualStickersPerRow) {
       htmlContent += '<div class="sticker-row">';
       
       for (let j = 0; j < actualStickersPerRow && (i + j) < selectedProductsData.length; j++) {
         const product = selectedProductsData[i + j];
+        
+        // Validate product has required barcode
+        if (!product.barcode || product.barcode.trim().length === 0) {
+          console.warn(`Product "${product.name}" has no barcode, skipping`);
+          continue;
+        }
+        
+        stickerCount++;
+        
         const barcodeImage = generateBarcode(product.barcode);
+        const serialNumber = getProductSerialNumber(product._id);
+        const variantId = getVariantId(product);
+        
+        // Use custom size display if set, otherwise use product sizes
+        const sizeDisplay = printSettings.customSizeDisplay 
+          ? printSettings.customSizeDisplay 
+          : (product.sizes && product.sizes.length > 0 ? product.sizes.slice(0, 3).join(',') : '');
         
         htmlContent += `
           <div class="sticker">
@@ -349,8 +701,15 @@ export default function BarcodeManager() {
             ${printSettings.includeName ? `<div class="product-name">${product.name}</div>` : ''}
             ${printSettings.includePrice ? `<div class="product-price">৳${product.sellingPrice.toLocaleString('en-BD')}</div>` : ''}
             <img src="${barcodeImage}" alt="Barcode" class="barcode-image" />
-            ${printSettings.includeSize && product.sizes && product.sizes.length > 0 ? `<div class="product-size">${product.sizes.slice(0, 3).join(',')}</div>` : ''}
+            ${(printSettings.includeSize || product.color) ? `
+              <div class="size-color-row">
+                ${sizeDisplay && printSettings.includeSize ? `<div class="product-size">${sizeDisplay}</div>` : '<div></div>'}
+                ${product.color ? `<div class="product-color">${product.color}</div>` : '<div></div>'}
+              </div>
+            ` : ''}
+            <div class="variant-circle">${variantId}</div>
             <div class="bottom-info">
+              ${printSettings.includeSerialNumber ? `<div class="serial-number">${serialNumber}</div>` : '<div></div>'}
               ${printSettings.includeMadeBy && product.madeBy ? `<div class="made-by">${product.madeBy}</div>` : '<div></div>'}
             </div>
           </div>
@@ -378,10 +737,15 @@ export default function BarcodeManager() {
     printWindow.document.write(htmlContent);
     printWindow.document.close();
     
-    toast.success(`Generated ${selectedProductsData.length} POS barcode labels`);
-  }, [products, selectedProducts, printSettings, generateBarcode]);
+    toast.success(`Generated ${stickerCount} valid POS barcode labels (${selectedProductsData.length - stickerCount} skipped due to missing barcodes)`);
+  }, [products, selectedProducts, printSettings, generateBarcode, getProductSerialNumber]);
 
   const printSingleBarcode = useCallback((product: any) => {
+    // Validate product has barcode
+    if (!product.barcode || product.barcode.trim().length === 0) {
+      toast.error(`Product "${product.name}" has no barcode assigned. Please add a barcode first.`);
+      return;
+    }
     setSelectedProducts([product._id]);
     setTimeout(() => printBarcodes(), 100);
   }, [printBarcodes]);
@@ -520,6 +884,11 @@ export default function BarcodeManager() {
                       {product.madeBy && (
                         <p className="text-xs text-gray-500">Made by: {product.madeBy}</p>
                       )}
+                      {!product.barcode || product.barcode.trim().length === 0 ? (
+                        <p className="text-xs text-red-500 font-semibold mt-1">⚠️ No Barcode</p>
+                      ) : (
+                        <p className="text-xs text-green-600 font-semibold mt-1">✓ Barcode Ready</p>
+                      )}
                     </div>
 
                     <div className="flex justify-between items-center">
@@ -567,7 +936,7 @@ export default function BarcodeManager() {
             <div className="mb-4">
               <input
                 type="text"
-                placeholder="Search by product name or barcode..."
+                placeholder="Search by product name, barcode, serial number, or variant ID..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all"
@@ -748,7 +1117,7 @@ export default function BarcodeManager() {
                 <div className="space-y-3">
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Font Size (px)
+                      Store Name Font Size (px)
                     </label>
                     <input
                       type="number"
@@ -759,8 +1128,50 @@ export default function BarcodeManager() {
                       className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 transition-all"
                     />
                   </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Product Name Font Size (px)
+                    </label>
+                    <input
+                      type="number"
+                      min="6"
+                      max="14"
+                      value={printSettings.productNameFontSize}
+                      onChange={(e) => setPrintSettings({...printSettings, productNameFontSize: Number(e.target.value)})}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 transition-all"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Product Size Font Size (px)
+                    </label>
+                    <input
+                      type="number"
+                      min="8"
+                      max="16"
+                      value={printSettings.productSizeFontSize}
+                      onChange={(e) => setPrintSettings({...printSettings, productSizeFontSize: Number(e.target.value)})}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 transition-all"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Serial Number Font Size (px)
+                    </label>
+                    <input
+                      type="number"
+                      min="5"
+                      max="12"
+                      value={printSettings.serialNumberFontSize}
+                      onChange={(e) => setPrintSettings({...printSettings, serialNumberFontSize: Number(e.target.value)})}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 transition-all"
+                    />
+                  </div>
                   
-                  <div className="space-y-2">
+                  <div className="space-y-2 mt-4">
                     <label className="flex items-center">
                       <input
                         type="checkbox"
@@ -791,6 +1202,21 @@ export default function BarcodeManager() {
                       <span className="ml-2 text-sm text-gray-700">Include Size (if available)</span>
                     </label>
 
+                    {printSettings.includeSize && (
+                      <div className="ml-6 mt-2">
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                          Custom Size Display (e.g., S,M,L or M/L)
+                        </label>
+                        <input
+                          type="text"
+                          placeholder="Leave empty to use product sizes"
+                          value={printSettings.customSizeDisplay}
+                          onChange={(e) => setPrintSettings({...printSettings, customSizeDisplay: e.target.value})}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 transition-all text-sm"
+                        />
+                        <p className="text-xs text-gray-500 mt-1">If filled, this will override product sizes on labels</p>
+                      </div>
+                    )}
                     <label className="flex items-center">
                       <input
                         type="checkbox"
@@ -799,6 +1225,16 @@ export default function BarcodeManager() {
                         className="h-4 w-4 text-purple-600 focus:ring-purple-500 border-gray-300 rounded"
                       />
                       <span className="ml-2 text-sm text-gray-700">Include Made By</span>
+                    </label>
+
+                    <label className="flex items-center">
+                      <input
+                        type="checkbox"
+                        checked={printSettings.includeSerialNumber}
+                        onChange={(e) => setPrintSettings({...printSettings, includeSerialNumber: e.target.checked})}
+                        className="h-4 w-4 text-purple-600 focus:ring-purple-500 border-gray-300 rounded"
+                      />
+                      <span className="ml-2 text-sm text-gray-700">Include Serial Number (DBH-XXXX)</span>
                     </label>
                   </div>
                 </div>
@@ -813,15 +1249,14 @@ export default function BarcodeManager() {
                     style={{
                       width: `${printSettings.stickerWidth * 60}px`,
                       height: `${printSettings.stickerHeight * 60}px`,
-                      fontSize: `${printSettings.fontSize}px`,
                       fontFamily: 'Arial, Helvetica, sans-serif'
                     }}
                   >
-                    <div className="font-bold text-xs" style={{ fontSize: `${printSettings.fontSize}px` }}>
+                    <div className="font-bold" style={{ fontSize: `${printSettings.fontSize}px` }}>
                       DUBAI BORKA HOUSE
                     </div>
                     {printSettings.includeName && (
-                      <div className="truncate" style={{ fontSize: '10px', margin: '2px 0' }}>
+                      <div className="truncate" style={{ fontSize: `${printSettings.productNameFontSize}px`, margin: '2px 0' }}>
                         Sample Abaya
                       </div>
                     )}
@@ -834,9 +1269,35 @@ export default function BarcodeManager() {
                       <div className="bg-black h-6 w-full mb-1"></div>
                     </div>
                     {printSettings.includeSize && (
-                      <div style={{ fontSize: `${printSettings.fontSize - 3}px`, margin: '1px 0' }}>M,L,XL</div>
+                      <div className="flex justify-between w-full gap-1" style={{ fontSize: `${printSettings.productSizeFontSize}px`, margin: '1px 0' }}>
+                        <div className="text-left">{printSettings.customSizeDisplay || 'M,L,XL'}</div>
+                        <div className="text-right text-gray-600">Red</div>
+                      </div>
                     )}
-                    <div className="flex justify-end w-full mt-auto">
+                    <div className="flex justify-center w-full my-2">
+                      <div style={{
+                        width: '50px',
+                        height: '50px',
+                        borderRadius: '50%',
+                        background: 'linear-gradient(135deg, #7c3aed 0%, #6d28d9 100%)',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        fontWeight: 'bold',
+                        fontSize: '20px',
+                        color: 'white',
+                        boxShadow: '0 2px 8px rgba(124, 58, 237, 0.3)',
+                        border: '2px solid #5b21b6'
+                      }}>
+                        #25
+                      </div>
+                    </div>
+                    <div className="flex justify-between w-full mt-auto gap-1">
+                      {printSettings.includeSerialNumber && (
+                        <div className="text-gray-600 text-left" style={{ fontSize: `${printSettings.serialNumberFontSize}px`, fontFamily: 'monospace' }}>
+                          DBH-0001
+                        </div>
+                      )}
                       {printSettings.includeMadeBy && (
                         <div className="text-gray-600 text-right" style={{ fontSize: '10px' }}>
                           Dubai
@@ -851,6 +1312,46 @@ export default function BarcodeManager() {
               </div>
             </div>
 
+            {/* Serial Number Management */}
+            <div className="mt-6 pt-6 border-t border-gray-200">
+              <h4 className="font-medium text-gray-900 mb-3">Serial Number Management</h4>
+              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4">
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                  <div>
+                    <p className="text-sm text-gray-600">Serial Number Counter</p>
+                    <p className="text-2xl font-bold text-blue-600">{serialNumberCounter}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-gray-600">Variant Counter</p>
+                    <p className="text-2xl font-bold text-purple-600">{variantCounter}/100</p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-gray-600">Total Variants Used</p>
+                    <p className="text-2xl font-bold text-gray-700">{variantMap.size}</p>
+                  </div>
+                </div>
+              </div>
+              <p className="text-sm text-gray-600 mb-3">
+                <strong>Serial Numbers:</strong> Sequential from DBH-0001 (auto-increment). 
+                <br/>
+                <strong>Variant IDs:</strong> 1-100 based on Product Name + Fabric + Size + Color combinations.
+              </p>
+              <div className="flex gap-2">
+                <button
+                  onClick={resetSerialNumberSystem}
+                  className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 text-sm font-medium transition-colors"
+                >
+                  🔄 Reset Serial Counter
+                </button>
+                <button
+                  onClick={resetVariantSystem}
+                  className="px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 text-sm font-medium transition-colors"
+                >
+                  🔄 Reset Variant System
+                </button>
+              </div>
+            </div>
+
             {/* Quick Presets */}
             <div className="mt-6 pt-6 border-t border-gray-200">
               <h4 className="font-medium text-gray-900 mb-3">POS Printer Presets</h4>
@@ -862,12 +1363,17 @@ export default function BarcodeManager() {
                     stickerHeight: 1.0,
                     gapBetweenStickers: 10,
                     fontSize: 8,
+                    productNameFontSize: 8,
+                    productSizeFontSize: 10,
+                    serialNumberFontSize: 7,
                     includePrice: true,
                     includeName: true,
                     includeSize: false,
                     includeMadeBy: true,
+                    includeSerialNumber: true,
                     stickersPerRow: 2,
                     paperWidth: 4,
+                    customSizeDisplay: "",
                   })}
                   className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 text-sm font-medium transition-colors"
                 >
@@ -880,12 +1386,17 @@ export default function BarcodeManager() {
                     stickerHeight: 0.75,
                     gapBetweenStickers: 8,
                     fontSize: 6,
+                    productNameFontSize: 6,
+                    productSizeFontSize: 8,
+                    serialNumberFontSize: 5,
                     includePrice: true,
                     includeName: false,
                     includeSize: false,
                     includeMadeBy: false,
+                    includeSerialNumber: true,
                     stickersPerRow: 3,
                     paperWidth: 4,
+                    customSizeDisplay: "",
                   })}
                   className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 text-sm font-medium transition-colors"
                 >
@@ -898,12 +1409,17 @@ export default function BarcodeManager() {
                     stickerHeight: 1.25,
                     gapBetweenStickers: 12,
                     fontSize: 10,
+                    productNameFontSize: 9,
+                    productSizeFontSize: 12,
+                    serialNumberFontSize: 8,
                     includePrice: true,
                     includeName: true,
                     includeSize: true,
                     includeMadeBy: true,
+                    includeSerialNumber: true,
                     stickersPerRow: 2,
                     paperWidth: 4,
+                    customSizeDisplay: "",
                   })}
                   className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 text-sm font-medium transition-colors"
                 >

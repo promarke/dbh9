@@ -134,13 +134,34 @@ export default function Inventory() {
 
   // Memoized filtered and sorted products for optimal performance
   const filteredProducts = useMemo(() => {
+    // Load serial and variant data from localStorage for search
+    const serialNumberMapStr = localStorage.getItem("productSerialNumbers") || "{}";
+    const variantMapStr = localStorage.getItem("variantMap") || "{}";
+    const productVariantsStr = localStorage.getItem("productVariants") || "{}";
+    
+    const serialNumberMap = new Map<string, string>(Object.entries(JSON.parse(serialNumberMapStr)));
+    const variantMap = new Map<string, number>(Object.entries(JSON.parse(variantMapStr)));
+    const productVariants = new Map<string, number>(Object.entries(JSON.parse(productVariantsStr)));
+    
     let filtered = products.filter(product => {
       const searchLower = searchTerm.toLowerCase();
-      const matchesSearch = !searchTerm || 
+      
+      // Check standard search fields
+      const matchesStandardSearch = !searchTerm || 
         product.name.toLowerCase().includes(searchLower) ||
         product.brand.toLowerCase().includes(searchLower) ||
         product.productCode.toLowerCase().includes(searchLower) ||
         product.barcode.toLowerCase().includes(searchLower);
+      
+      // Check serial number search (if product has sequential serial)
+      const serialNumber = serialNumberMap.get(product._id);
+      const matchesSerialNumber = !searchTerm || (serialNumber && serialNumber.toLowerCase().includes(searchLower));
+      
+      // Check variant ID search (if product has variant ID)
+      const variantId = productVariants.get(product._id);
+      const matchesVariantId = !searchTerm || (variantId && variantId.toString().includes(searchLower));
+      
+      const matchesSearch = matchesStandardSearch || matchesSerialNumber || matchesVariantId;
       
       const matchesCategory = !filterCategory || product.categoryId === filterCategory;
       const matchesBrand = !filterBrand || product.brand === filterBrand;
@@ -219,6 +240,20 @@ export default function Inventory() {
         return;
       }
 
+      // Barcode validation
+      if (!newProduct.barcode?.trim()) {
+        toast.error("Barcode is required for product creation");
+        return;
+      }
+      if (newProduct.barcode.length < 6) {
+        toast.error("Barcode must be at least 6 characters long for scanability");
+        return;
+      }
+      if (!/^[A-Z0-9-]+$/.test(newProduct.barcode)) {
+        toast.error("Barcode can only contain uppercase letters, numbers, and hyphens");
+        return;
+      }
+
       // Validate variants
       const validVariants = productVariants.filter(v => 
         v.color?.trim() && v.size?.trim() && typeof v.stock === 'number' && v.stock > 0
@@ -260,12 +295,16 @@ export default function Inventory() {
         const sizeCode = variant.size.replace('"', '');
         const variantCode = `${newProduct.productCode}-${colorCode}-${sizeCode}`;
         
-        // Generate unique barcode for each variant
-        const timestamp = Date.now();
-        const randomSuffix = Math.random().toString(36).substring(2, 6).toUpperCase();
-        const variantBarcode = newProduct.barcode 
-          ? `${newProduct.barcode}-${colorCode}-${sizeCode}-${randomSuffix}`
-          : `${timestamp}-${index}-${randomSuffix}`;
+        // Generate unique scannable barcode for each variant
+        // Format: BASEBARCODE-COLORCODE-SIZECODE-VARIANTINDEX
+        // Example: ABC1234-BL-52-01
+        const variantIndex = String(index + 1).padStart(2, '0');
+        const variantBarcode = `${newProduct.barcode}-${colorCode}-${sizeCode}-${variantIndex}`;
+        
+        // Ensure barcode is not too long (max 20 chars for most barcode scanners)
+        const truncatedBarcode = variantBarcode.length > 20 
+          ? `${newProduct.barcode.substring(0, 6)}-${colorCode}-${sizeCode}-${variantIndex}`
+          : variantBarcode;
 
         return addProduct({
           name: `${newProduct.name} - ${variant.color} (${variant.size})`,
@@ -280,7 +319,7 @@ export default function Inventory() {
           occasion: newProduct.occasion,
           costPrice: newProduct.costPrice,
           sellingPrice: newProduct.sellingPrice,
-          barcode: variantBarcode,
+          barcode: truncatedBarcode,
           productCode: variantCode,
           madeBy: newProduct.madeBy,
           currentStock: variant.stock,
@@ -444,7 +483,7 @@ export default function Inventory() {
           <div>
             <input
               type="text"
-              placeholder="Search products..."
+              placeholder="Search by product name, code, serial number, or variant ID..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all placeholder-gray-500 text-sm"
