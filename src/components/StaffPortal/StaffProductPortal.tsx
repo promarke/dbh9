@@ -1,6 +1,6 @@
 import React, { useState, useCallback, useEffect } from 'react';
 import { useQuery } from 'convex/react';
-import { Camera, ImagePlus, Settings, Home, BarChart3, Trophy, FileText } from 'lucide-react';
+import { Camera, ImagePlus, Settings, Home, BarChart3, Trophy, FileText, Package, Sliders } from 'lucide-react';
 import { toast } from 'sonner';
 import { ProductScanner } from './ProductScanner';
 import { ProductDetailView } from './ProductDetailView';
@@ -9,6 +9,8 @@ import { StaffProductSettingsPanel } from './StaffProductSettingsPanel';
 import { StaffStatisticsDashboard } from './StaffStatisticsDashboard';
 import { StaffLeaderboard } from './StaffLeaderboard';
 import { DailyReportGenerator } from './DailyReportGenerator';
+import { StaffProductDetailModule } from './StaffProductDetailModule';
+import { StaffProductFeatureDashboard } from './StaffProductFeatureDashboard';
 
 interface ScannedProduct {
   _id: string;
@@ -41,7 +43,7 @@ interface ScannedBarcode {
   createdDate?: string;
 }
 
-type ViewState = 'home' | 'scanner' | 'detail' | 'upload' | 'settings' | 'statistics' | 'leaderboard' | 'report';
+type ViewState = 'home' | 'scanner' | 'detail' | 'upload' | 'settings' | 'statistics' | 'leaderboard' | 'report' | 'product-detail-module' | 'feature-dashboard';
 
 export const StaffProductPortal: React.FC = () => {
   const [viewState, setViewState] = useState<ViewState>('home');
@@ -165,7 +167,35 @@ export const StaffProductPortal: React.FC = () => {
             </div>
 
             {/* দ্রুত অ্যাক্সেস কার্ড */}
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
+              <div className="bg-white rounded-lg shadow p-6 border-t-4 border-indigo-500">
+                <Sliders className="w-8 h-8 text-indigo-500 mb-2" />
+                <h3 className="font-bold text-gray-800 mb-2">ফিচার সেটিংস</h3>
+                <p className="text-sm text-gray-600 mb-3">
+                  সব ফিচার দেখুন
+                </p>
+                <button
+                  onClick={() => setViewState('feature-dashboard')}
+                  className="text-sm text-indigo-600 hover:text-indigo-700 font-semibold"
+                >
+                  খুলুন →
+                </button>
+              </div>
+
+              <div className="bg-white rounded-lg shadow p-6 border-t-4 border-cyan-500">
+                <Package className="w-8 h-8 text-cyan-500 mb-2" />
+                <h3 className="font-bold text-gray-800 mb-2">পণ্য মডিউল</h3>
+                <p className="text-sm text-gray-600 mb-3">
+                  সম্পূর্ণ পরিচালনা
+                </p>
+                <button
+                  onClick={() => setViewState('product-detail-module')}
+                  className="text-sm text-cyan-600 hover:text-cyan-700 font-semibold"
+                >
+                  খুলুন →
+                </button>
+              </div>
+
               <div className="bg-white rounded-lg shadow p-6 border-t-4 border-blue-500">
                 <BarChart3 className="w-8 h-8 text-blue-500 mb-2" />
                 <h3 className="font-bold text-gray-800 mb-2">স্ট্যাটিস্টিক্স</h3>
@@ -197,17 +227,6 @@ export const StaffProductPortal: React.FC = () => {
                   className="text-sm text-yellow-600 hover:text-yellow-700 font-semibold"
                 >
                   র‍্যাঙ্কিং →
-                </button>
-              </div>
-
-              <div className="bg-white rounded-lg shadow p-6 border-t-4 border-orange-500">
-                <Settings className="w-8 h-8 text-orange-500 mb-2" />
-                <h3 className="font-bold text-gray-800 mb-2">সেটিংস</h3>
-                <button
-                  onClick={() => setViewState('settings')}
-                  className="text-sm text-orange-600 hover:text-orange-700 font-semibold"
-                >
-                  কনফিগার করুন →
                 </button>
               </div>
             </div>
@@ -315,6 +334,22 @@ export const StaffProductPortal: React.FC = () => {
             branchId="current-branch"
             onClose={resetState}
           />
+        )}
+
+        {viewState === 'product-detail-module' && (
+          <StaffProductDetailModule
+            productId={scannedProduct?._id || 'NEW'}
+            branchId="current-branch"
+            onClose={resetState}
+            onSave={(config) => {
+              console.log('সংরক্ষিত কনফিগ:', config);
+              toast.success('পণ্য কনফিগারেশন সংরক্ষিত হয়েছে');
+            }}
+          />
+        )}
+
+        {viewState === 'feature-dashboard' && (
+          <StaffProductFeatureDashboard />
         )}
       </div>
 

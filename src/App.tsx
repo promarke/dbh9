@@ -32,6 +32,7 @@ const HRPayroll = lazy(() => import("./components/HRPayroll"));
 const UserManagement = lazy(() => import("./components/UserManagement"));
 const RefundManagement = lazy(() => import("./components/RefundManagement"));
 const StaffProductPortal = lazy(() => import("./components/StaffPortal").then(m => ({ default: m.StaffProductPortal })));
+const ProductImageRecognition = lazy(() => import("./components/StaffPortal/ProductImageRecognition"));
 
 export default function App() {
   const [activeTab, setActiveTab] = useState("dashboard");
@@ -86,6 +87,7 @@ export default function App() {
   const desktopMenuItems = useMemo(() => [
     { id: "dashboard", name: "Dashboard", icon: "📊" },
     { id: "staff-portal", name: "Staff Portal", icon: "👨‍💼" },
+    { id: "product-recognition", name: "Product Scanner", icon: "📸" },
     { id: "pos", name: "POS", icon: "🏷️" },
     { id: "inventory", name: "Inventory", icon: "📦" },
     { id: "categories", name: "Categories", icon: "📂" },
@@ -118,6 +120,7 @@ export default function App() {
   const mobileMenuItems = useMemo(() => [
     { id: "dashboard", name: "Dashboard", icon: "📊" },
     { id: "staff-portal", name: "Staff Portal", icon: "👨‍💼" },
+    { id: "product-recognition", name: "Product Scanner", icon: "📸" },
     { id: "pos", name: "POS", icon: "🏷️" },
     { id: "inventory", name: "Inventory", icon: "📦" },
     { id: "categories", name: "Categories", icon: "📂" },
@@ -143,6 +146,8 @@ export default function App() {
         return <Dashboard />;
       case "staff-portal":
         return <Suspense fallback={<LazyLoadingFallback />}><StaffProductPortal /></Suspense>;
+      case "product-recognition":
+        return <Suspense fallback={<LazyLoadingFallback />}><ProductImageRecognition /></Suspense>;
       case "inventory":
         return <Suspense fallback={<LazyLoadingFallback />}><Inventory /></Suspense>;
       case "categories":
