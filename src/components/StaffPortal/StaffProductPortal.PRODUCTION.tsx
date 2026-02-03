@@ -2,8 +2,7 @@
 // এই implementation real Convex database এর সাথে কাজ করে - mock data নয়
 
 import React, { useState, useCallback, useEffect } from 'react';
-import { useQuery } from 'convex/react';
-import { Camera, ImagePlus, Settings, Home, BarChart3, Trophy, FileText, Package, Sliders } from 'lucide-react';
+import { Camera, ImagePlus, BarChart3, Trophy, Package, Sliders } from 'lucide-react';
 import { toast } from 'sonner';
 import { ProductScanner } from './ProductScanner';
 import { ProductDetailView } from './ProductDetailView';
@@ -12,8 +11,6 @@ import { StaffProductSettingsPanel } from './StaffProductSettingsPanel';
 import { StaffStatisticsDashboard } from './StaffStatisticsDashboard';
 import { StaffLeaderboard } from './StaffLeaderboard';
 import { DailyReportGenerator } from './DailyReportGenerator';
-import { StaffProductDetailModule } from './StaffProductDetailModule';
-import { StaffProductFeatureDashboard } from './StaffProductFeatureDashboard';
 
 interface ScannedProduct {
   _id: string;
@@ -76,19 +73,87 @@ export const StaffProductPortal: React.FC = () => {
 
   // ✅ Sync database products to local state or use fallback
   useEffect(() => {
-    // Using fallback data for development/testing
+    // Using complete product data for development/testing
     const fallbackProducts: ScannedProduct[] = [
       {
-        _id: 'fallback_001',
-        name: '[TEST] Sample Product',
-        barcode: 'TEST-0001',
-        brand: 'Test Brand',
-        price: 1000,
-        fabric: 'Test Fabric',
-        color: 'Test Color',
-        sizes: ['S', 'M', 'L'],
-        stock: 10,
-        imageUrl: 'https://via.placeholder.com/300x400?text=TEST',
+        _id: 'prod_001',
+        name: 'প্রিমিয়াম কালো আবায়া',
+        brand: 'আল-খাদির',
+        category: 'আবায়া',
+        price: 2500,
+        fabric: 'নকশী সিল্ক',
+        color: 'কালো',
+        sizes: ['S', 'M', 'L', 'XL'],
+        stock: 45,
+        material: 'সিল্ক ৮০%, কটন ২০%',
+        barcode: 'DBH-0001',
+        imageUrl: 'https://via.placeholder.com/300x400?text=পণ্য',
+        rating: 4.8,
+        reviews: 124,
+      },
+      {
+        _id: 'prod_002',
+        name: 'গোলাপী হিজাব স্কার্ফ',
+        brand: 'রোজ কালেকশন',
+        category: 'হিজাব',
+        price: 850,
+        fabric: 'মসৃণ শিফন',
+        color: 'গোলাপী',
+        sizes: ['One Size'],
+        stock: 120,
+        material: 'শিফন ১০০%',
+        barcode: 'DBH-0002',
+        imageUrl: 'https://via.placeholder.com/300x400?text=হিজাব',
+        rating: 4.6,
+        reviews: 89,
+      },
+      {
+        _id: 'prod_003',
+        name: 'নীল ডুপাটা সেট',
+        brand: 'নীলাম',
+        category: 'ডুপাটা',
+        price: 1500,
+        fabric: 'চুনি কাপড়',
+        color: 'নীল',
+        sizes: ['M', 'L'],
+        stock: 67,
+        material: 'চুনি ৯৫%, স্প্যান্ডেক্স ৫%',
+        barcode: 'DBH-0003',
+        imageUrl: 'https://via.placeholder.com/300x400?text=ডুপাটা',
+        rating: 4.7,
+        reviews: 156,
+      },
+      {
+        _id: 'prod_004',
+        name: 'সবুজ জরির কামিজ',
+        brand: 'এমার্ল্যান্ড',
+        category: 'কামিজ',
+        price: 3200,
+        fabric: 'জর্জেট, জরি',
+        color: 'সবুজ',
+        sizes: ['32', '34', '36', '38', '40'],
+        stock: 34,
+        material: 'জর্জেট, জরি, মোতি',
+        barcode: 'DBH-0004',
+        imageUrl: 'https://via.placeholder.com/300x400?text=কামিজ',
+        rating: 4.9,
+        reviews: 203,
+      },
+      {
+        _id: 'prod_005',
+        name: 'লাল বেনারসি শাড়ি',
+        brand: 'বেনারস রত্ন',
+        category: 'শাড়ি',
+        price: 5500,
+        fabric: 'খাঁটি বেনারসি শাড়ি',
+        color: 'লাল',
+        sizes: ['Free Size'],
+        stock: 22,
+        material: 'রেশম, সোনালী জরি',
+        barcode: 'DBH-0005',
+        imageUrl: 'https://via.placeholder.com/300x400?text=শাড়ি',
+        rating: 4.95,
+        reviews: 287,
       },
     ];
     
