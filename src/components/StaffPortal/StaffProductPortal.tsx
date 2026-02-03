@@ -53,13 +53,43 @@ export const StaffProductPortal: React.FC = () => {
   const [productImages, setProductImages] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [scanHistory, setScanHistory] = useState<string[]>([]);
-
   const [productsList, setProductsList] = useState<ScannedProduct[]>([]);
 
-  // Simulated products (Phase 2 এ Convex integrate করব)
+  // Production: Real products from database (via useQuery Convex hook)
+  // If Convex is deployed with products
+  // const convexProducts = useQuery(api.products.listActive);
+  
+  // For now, using mock data - Production ready to switch to Convex
   useEffect(() => {
-    // TODO: Replace with actual Convex query
-    // const products = useQuery(api.products.list, {});
+    // TODO: When Convex is ready, uncomment above and use:
+    // if (convexProducts) {
+    //   setProductsList(convexProducts as any);
+    //   console.log('✅ পণ্য লোড হয়েছে:', convexProducts.length);
+    // }
+    
+    // Demo করার জন্য sample products (database থেকে replace করবেন)
+    const mockProducts: ScannedProduct[] = [
+      {
+        _id: 'prod_001',
+        name: 'প্রিমিয়াম কালো আবায়া',
+        brand: 'আল-খাদির',
+        category: 'আবায়া',
+        price: 2500,
+        fabric: 'নকশী সিল্ক',
+        color: 'কালো',
+        sizes: ['S', 'M', 'L', 'XL'],
+        stock: 45,
+        material: 'সিল্ক ৮০%, কটন ২০%',
+        barcode: 'DBH-0001',
+        imageUrl: 'https://via.placeholder.com/300x400?text=পণ্য',
+        rating: 4.8,
+        reviews: 124,
+      },
+      // ... আরও পণ্য
+    ];
+    
+    setProductsList(mockProducts);
+    console.log('✅ Products loaded: ', mockProducts.length, 'items');
   }, []);
 
   // বারকোড থেকে পণ্য খুঁজুন
@@ -67,41 +97,69 @@ export const StaffProductPortal: React.FC = () => {
     setIsLoading(true);
     try {
       if (!productsList || productsList.length === 0) {
-        toast.error('পণ্য লোড হচ্ছে...');
+        console.error('❌ পণ্য তালিকা খালি:', productsList);
+        toast.error('পণ্য তথ্য লোড হয়নি। আবার চেষ্টা করুন।');
+        setViewState('home');
         return;
       }
 
-      // বারকোড পার্সিং: ধরে নিন ফরম্যাট হল "DBH-0001" বা "ABC1234-BL-52-01"
-      const found = productsList?.find((p: any) => (p as any)?.barcode === barcode);
+      console.log('🔍 বারকোড খুঁজছি:', barcode, 'মোট পণ্য:', productsList.length);
+
+      // বারকোড স্বাভাবিক করুন (whitespace সরান)
+      const normalizedBarcode = barcode.trim().toUpperCase();
+
+      // বারকোড দিয়ে সঠিক পণ্য খুঁজুন
+      const found = productsList.find(
+        (p) => p.barcode?.toUpperCase() === normalizedBarcode
+      );
 
       if (!found) {
-        toast.error('পণ্য খুঁজে পাওয়া যাচ্ছে না');
+        console.warn('⚠️ পণ্য পাওয়া যায়নি। উপলব্ধ বারকোড:', 
+          productsList.map(p => p.barcode).join(', ')
+        );
+        toast.error(`বারকোড "${normalizedBarcode}" খুঁজে পাওয়া যায়নি`);
         setScannedProduct(null);
         setViewState('home');
         return;
       }
 
-      // বারকোড ডিটেইল extract করুন (localStorage থেকে বা production এ DB থেকে)
+      console.log('✅ পণ্য খুঁজে পেয়েছি:', found.name);
+
+      // বারকোড ডিটেইল তৈরি করুন (পণ্য তথ্য থেকে)
+      // বারকোড ফরম্যাট: "DBH-0001" -> variantId = 1
+      const variantMatch = normalizedBarcode.match(/(\d+)/);
+      const variantId = variantMatch ? parseInt(variantMatch[1], 10) : 1;
+
       const barcodeDetail: ScannedBarcode = {
-        serialNumber: barcode.includes('DBH') ? barcode : 'N/A',
-        variantId: 1, // Adjust based on your logic
-        color: found.color || 'Unknown',
-        size: found.sizes?.[0] || 'N/A',
-        material: found.material,
-        embellishments: found.embellishments,
+        serialNumber: normalizedBarcode,
+        variantId: variantId,
+        color: found.color || 'অজানা',
+        size: found.sizes?.[0] || 'One Size',
+        material: found.material || 'তথ্য উপলব্ধ নয়',
+        embellishments: found.embellishments || 'কোনো নিদর্শন নেই',
         createdDate: new Date().toLocaleDateString('bn-BD'),
       };
 
-      setScannedBarcode(barcode);
+      // স্টেট আপডেট করুন
+      setScannedBarcode(normalizedBarcode);
       setScannedProduct(found);
       setScannedBarcodeDetail(barcodeDetail);
-      setProductImages([]); // Reset images
-      setScanHistory((prev) => [barcode, ...prev.slice(0, 9)]); // Keep last 10
+      setProductImages([]); // ছবি রিসেট করুন
+      setScanHistory((prev) => [normalizedBarcode, ...prev.slice(0, 9)]); // গত ১০টি রাখুন
+      
       setViewState('detail');
-      toast.success(`পণ্য পাওয়া গেছে: ${found.name}`);
+      toast.success(`✅ পাওয়া গেছে: ${found.name} (৳${found.price})`);
+      
+      console.log('📊 পণ্য বিস্তারিত:', {
+        name: found.name,
+        barcode: normalizedBarcode,
+        variant: variantId,
+        color: found.color,
+        price: found.price,
+      });
     } catch (error) {
-      console.error('Error finding product:', error);
-      toast.error('পণ্য খুঁজতে ত্রুটি হয়েছে');
+      console.error('❌ পণ্য খুঁজতে ত্রুটি:', error);
+      toast.error('অপ্রত্যাশিত ত্রুটি। আবার চেষ্টা করুন।');
       setViewState('home');
     } finally {
       setIsLoading(false);

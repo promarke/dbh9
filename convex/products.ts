@@ -83,6 +83,60 @@ export const get = query({
   },
 });
 
+// Production Query: খুঁজুন পণ্য বারকোড দ্বারা
+export const getByBarcode = query({
+  args: { barcode: v.string() },
+  handler: async (ctx, args) => {
+    await getAuthUserId(ctx);
+    
+    // বারকোড normalize করুন
+    const normalizedBarcode = args.barcode.trim().toUpperCase();
+    
+    // সমস্ত পণ্য খুঁজুন (যেহেতু barcode index নেই, সবগুলি scan করব)
+    const products = await ctx.db.query("products").collect();
+    
+    // বারকোড দ্বারা মিল করুন (case-insensitive)
+    const found = products.find(p => 
+      p.barcode && p.barcode.toUpperCase() === normalizedBarcode && p.isActive
+    );
+    
+    if (!found) {
+      return null;
+    }
+    
+    return found;
+  },
+});
+
+// Production Query: সমস্ত সক্রিয় পণ্য (স্টাফ স্ক্যানারের জন্য)
+export const listActive = query({
+  handler: async (ctx) => {
+    await getAuthUserId(ctx);
+    
+    const products = await ctx.db.query("products").collect();
+    return products.filter(product => product.isActive).map(p => ({
+      _id: p._id,
+      name: p.name,
+      brand: p.brand,
+      category: p.style || "সাধারণ",
+      categoryId: p.categoryId,
+      price: p.sellingPrice,
+      discountedPrice: p.sellingPrice * 0.85, // 15% ছাড় প্রদর্শনের জন্য
+      fabric: p.fabric,
+      color: p.color,
+      sizes: p.sizes,
+      stock: p.currentStock,
+      material: `${p.fabric}${p.embellishments ? ', ' + p.embellishments : ''}`,
+      embellishments: p.embellishments,
+      barcode: p.barcode,
+      rating: 4.5, // Default rating
+      reviews: 100, // Default reviews
+      imageUrl: p.imageUrl || 'https://via.placeholder.com/300x400?text=পণ্য',
+      description: p.description,
+    }));
+  },
+});
+
 export const create = mutation({
   args: {
     name: v.string(),
