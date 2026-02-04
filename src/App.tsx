@@ -46,15 +46,16 @@ export default function App() {
   
   // Initialize Service Worker and caching
   useEffect(() => {
-    // Register service worker
+    // Register service worker (non-critical for app function)
     if ("serviceWorker" in navigator) {
       navigator.serviceWorker
-        .register("/sw.js")
+        .register("/sw.js", { scope: "/" })
         .then((registration) => {
           console.log("✅ Service Worker registered successfully");
         })
         .catch((error) => {
-          console.log("Service Worker registration failed:", error);
+          // Service Worker failures are non-critical - app works fine without it
+          console.debug("Service Worker registration skipped (offline features unavailable):", error.message);
         });
     }
 

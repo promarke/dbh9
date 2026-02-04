@@ -683,3 +683,385 @@ export const getAuditTrail = query({
       .collect();
   },
 });
+
+// ✅ AUTOMATED: Create & Approve Refunds for Multiple Sales
+export const createAndApproveBulk = mutation({
+  args: {
+    saleNumbers: v.array(v.string()), // e.g., ["INV-1769778062695", "INV-1769776643529"]
+    autoApprove: v.boolean(), // true = auto approve, false = just create
+  },
+  handler: async (ctx, args) => {
+    const userId = await getAuthUserId(ctx);
+    if (!userId) throw new Error("Not authenticated");
+
+    const user = await ctx.db.get(userId);
+    if (!user) throw new Error("User not found");
+
+    const results = [];
+    const errors = [];
+
+    for (const saleNumber of args.saleNumbers) {
+      try {
+        // ✅ STEP 1: Find sale by saleNumber
+        const allSales = await ctx.db
+          .query("sales")
+          .order("desc")
+          .take(1000);
+        
+        const sale = allSales.find(s => s.saleNumber === saleNumber);
+        if (!sale) {
+          errors.push(`Sale ${saleNumber} not found`);
+          continue;
+        }
+
+        if (sale.status === "cancelled") {
+          errors.push(`Sale ${saleNumber} is already cancelled`);
+          continue;
+        }
+
+        // ✅ STEP 2: Create refund record
+        const refundNumber = `REF-${saleNumber.replace("INV-", "")}-AUTO`;
+        const refundId = await ctx.db.insert("refunds", {
+          refundNumber,
+          saleId: sale._id,
+          saleNumber: sale.saleNumber,
+          branchId: sale.branchId,
+          branchName: sale.branchName,
+          customerId: sale.customerId,
+          customerName: sale.customerName || "Walk-in",
+          customerPhone: "",
+          items: sale.items.map((item: any) => ({
+            productId: item.productId,
+            productName: item.productName,
+            quantity: item.quantity,
+            unitPrice: item.unitPrice,
+            totalPrice: item.totalPrice,
+            size: item.size || null,
+            reason: "Full Refund",
+            condition: "new",
+            notes: "Automated admin refund",
+          })),
+          subtotal: sale.subtotal || 0,
+          tax: sale.tax || 0,
+          discount: sale.discount || 0,
+          refundAmount: sale.total,
+          refundMethod: sale.paymentMethod,
+          originalPaymentMethod: sale.paymentMethod,
+          status: "pending",
+          approvalStatus: args.autoApprove ? "approved" : "pending_approval",
+          refundReason: "Admin Refund",
+          refundNotes: "Full refund and restock - automated process",
+          requestDate: Date.now(),
+          isReturned: false,
+          restockRequired: true,
+        });
+
+        // ✅ STEP 3: Create audit trail - CREATED
+        await ctx.db.insert("refundAuditTrail", {
+          refundId,
+          refundNumber,
+          actionType: "created",
+          newStatus: "pending",
+          performedBy: userId,
+          performedByName: user?.name || user?.email || "System",
+          timestamp: Date.now(),
+          notes: `Refund created by automated process for sale ${saleNumber}`,
+        });
+
+        // ✅ STEP 4: Auto-approve if requested
+        if (args.autoApprove) {
+          await ctx.db.patch(refundId, {
+            approvalStatus: "approved",
+            approvalDate: Date.now(),
+            approvedBy: userId,
+            approvedByName: user?.name || user?.email || "System",
+          });
+
+          // Create audit trail - APPROVED
+          await ctx.db.insert("refundAuditTrail", {
+            refundId,
+            refundNumber,
+            actionType: "approved",
+            previousStatus: "pending_approval",
+            newStatus: "approved",
+            performedBy: userId,
+            performedByName: user?.name || user?.email || "System",
+            timestamp: Date.now(),
+            notes: `Refund auto-approved by system`,
+          });
+        }
+
+        results.push({
+          saleNumber,
+          saleId: sale._id,
+          refundId,
+          refundNumber,
+          amount: sale.total,
+          status: args.autoApprove ? "created_and_approved" : "created",
+          approvalStatus: args.autoApprove ? "approved" : "pending_approval",
+        });
+      } catch (error) {
+        errors.push(`Error processing ${saleNumber}: ${error}`);
+      }
+    }
+
+    return {
+      success: results.length > 0,
+      processed: results.length,
+      failed: errors.length,
+      results,
+      errors: errors.length > 0 ? errors : undefined,
+      nextSteps: args.autoApprove 
+        ? "Now run refunds.processBulk() to process payments"
+        : "Now approve refunds manually or call refunds.approveBulk()",
+    };
+  },
+});
+
+// ✅ AUTOMATED: Process Multiple Refunds
+export const processBulk = mutation({
+  args: {
+    refundIds: v.array(v.id("refunds")),
+  },
+  handler: async (ctx, args) => {
+    const userId = await getAuthUserId(ctx);
+    if (!userId) throw new Error("Not authenticated");
+
+    const user = await ctx.db.get(userId);
+    if (!user) throw new Error("User not found");
+
+    const results = [];
+    const errors = [];
+
+    for (const refundId of args.refundIds) {
+      try {
+        const refund = await ctx.db.get(refundId);
+        if (!refund) {
+          errors.push(`Refund ${refundId} not found`);
+          continue;
+        }
+
+        if (refund.approvalStatus !== "approved") {
+          errors.push(`Refund ${refund.refundNumber} is not approved (status: ${refund.approvalStatus})`);
+          continue;
+        }
+
+        // Update refund status
+        await ctx.db.patch(refundId, {
+          status: "processed",
+          processedBy: userId,
+          processedByName: user?.name || user?.email || "System",
+          processedDate: Date.now(),
+          refundDetails: {
+            transactionId: `AUTO-PROCESS-${Date.now()}`,
+            reference: refund.saleNumber,
+            status: "completed",
+            remark: "Automated processing",
+          },
+        });
+
+        // Create audit trail
+        await ctx.db.insert("refundAuditTrail", {
+          refundId,
+          refundNumber: refund.refundNumber,
+          actionType: "processed",
+          previousStatus: refund.status,
+          newStatus: "processed",
+          performedBy: userId,
+          performedByName: user?.name || user?.email || "System",
+          timestamp: Date.now(),
+          notes: `Refund auto-processed`,
+        });
+
+        results.push({
+          refundId,
+          refundNumber: refund.refundNumber,
+          status: "processed",
+          amount: refund.refundAmount,
+        });
+      } catch (error) {
+        errors.push(`Error processing refund ${refundId}: ${error}`);
+      }
+    }
+
+    return {
+      success: results.length > 0,
+      processed: results.length,
+      failed: errors.length,
+      results,
+      errors: errors.length > 0 ? errors : undefined,
+      nextSteps: "Now run refunds.completeBulk() to complete refunds and trigger Undo Sale",
+    };
+  },
+});
+
+// ✅ AUTOMATED: Complete Multiple Refunds (UNDO SALE)
+export const completeBulk = mutation({
+  args: {
+    refundIds: v.array(v.id("refunds")),
+    returnCondition: v.optional(v.string()),
+  },
+  handler: async (ctx, args) => {
+    const userId = await getAuthUserId(ctx);
+    if (!userId) throw new Error("Not authenticated");
+
+    const user = await ctx.db.get(userId);
+    if (!user) throw new Error("User not found");
+
+    const results = [];
+    const errors = [];
+
+    for (const refundId of args.refundIds) {
+      try {
+        const refund = await ctx.db.get(refundId);
+        if (!refund) {
+          errors.push(`Refund ${refundId} not found`);
+          continue;
+        }
+
+        // Get original sale
+        let originalSale = null;
+        if (refund.saleId) {
+          originalSale = await ctx.db.get(refund.saleId);
+        }
+
+        // ✅ STEP 1: Mark refund as completed
+        await ctx.db.patch(refundId, {
+          status: "completed",
+          completedDate: Date.now(),
+          isReturned: true,
+          returnDate: Date.now(),
+          returnCondition: args.returnCondition || "Full Refund Completed",
+          inspectionNotes: "Automated undo sale process",
+        });
+
+        // ✅ STEP 2: Mark original sale as CANCELLED
+        if (originalSale && refund.saleId) {
+          await ctx.db.patch(refund.saleId, {
+            status: "cancelled",
+          });
+        }
+
+        // ✅ STEP 3: Restore inventory
+        if (refund.restockRequired && refund.items) {
+          for (const item of refund.items) {
+            await ctx.db.insert("stockMovements", {
+              productId: item.productId,
+              productName: item.productName,
+              branchId: refund.branchId,
+              branchName: refund.branchName,
+              type: "in",
+              quantity: item.quantity,
+              reason: "Undo Sale Return",
+              reference: refund.refundNumber,
+              userId,
+              userName: user?.name || "System",
+              previousStock: 0,
+              newStock: 0,
+              notes: `Auto undo: Restocking from sale #${originalSale?.saleNumber || "N/A"} - Refund #${refund.refundNumber}`,
+            });
+
+            // Update product stock
+            const product = await ctx.db.get(item.productId);
+            if (product) {
+              const newStock = (product.currentStock || 0) + item.quantity;
+              await ctx.db.patch(item.productId, {
+                currentStock: newStock,
+                isActive: true,
+              });
+
+              // Update branch stock
+              if (product.branchStock && product.branchStock.length > 0) {
+                const updatedBranchStock = product.branchStock.map((bs: any) => {
+                  if (bs.branchId === refund.branchId) {
+                    return {
+                      ...bs,
+                      currentStock: (bs.currentStock || 0) + item.quantity,
+                    };
+                  }
+                  return bs;
+                });
+                await ctx.db.patch(item.productId, {
+                  branchStock: updatedBranchStock,
+                });
+              }
+            }
+          }
+        }
+
+        // ✅ STEP 4: Reverse loyalty points
+        if (originalSale?.customerId) {
+          const customer = await ctx.db.get(originalSale.customerId);
+          if (customer) {
+            const allPointsForSale = await ctx.db
+              .query("pointsTransactions")
+              .collect();
+
+            let totalPointsToReverse = 0;
+            for (const transaction of allPointsForSale) {
+              if (
+                transaction.transactionType === "purchase" && 
+                transaction.referenceId === refund.saleId
+              ) {
+                totalPointsToReverse += transaction.points;
+              }
+            }
+
+            if (totalPointsToReverse > 0) {
+              await ctx.db.insert("pointsTransactions", {
+                customerId: originalSale.customerId,
+                customerName: originalSale.customerName || "Walk-in",
+                transactionType: "refund",
+                points: -totalPointsToReverse,
+                description: `Points reversal for sale #${originalSale.saleNumber} - Refund #${refund.refundNumber}`,
+                referenceId: refund.saleId,
+                branchId: refund.branchId,
+                branchName: refund.branchName,
+                createdAt: Date.now(),
+                createdBy: userId,
+                notes: `Auto reversed: -${totalPointsToReverse} points`,
+              });
+
+              const reversedPoints = (customer.loyaltyPoints || 0) - totalPointsToReverse;
+              await ctx.db.patch(originalSale.customerId, {
+                loyaltyPoints: Math.max(0, reversedPoints),
+              });
+            }
+          }
+        }
+
+        // ✅ STEP 5: Create completion audit trail
+        await ctx.db.insert("refundAuditTrail", {
+          refundId,
+          refundNumber: refund.refundNumber,
+          actionType: "completed",
+          previousStatus: refund.status,
+          newStatus: "completed",
+          performedBy: userId,
+          performedByName: user?.name || user?.email || "System",
+          timestamp: Date.now(),
+          notes: `✅ AUTO UNDO SALE COMPLETED - All transactions reversed. Sale #${originalSale?.saleNumber || "N/A"} marked as cancelled. Stock restored (${refund.items?.length || 0} items). Loyalty points reversed.`,
+        });
+
+        results.push({
+          refundId,
+          refundNumber: refund.refundNumber,
+          saleNumber: refund.saleNumber,
+          status: "completed",
+          amount: refund.refundAmount,
+        });
+      } catch (error) {
+        errors.push(`Error completing refund ${refundId}: ${error}`);
+      }
+    }
+
+    return {
+      success: results.length > 0,
+      completed: results.length,
+      failed: errors.length,
+      results,
+      errors: errors.length > 0 ? errors : undefined,
+      summary: `✅ Undo Sale complete for ${results.length} sales. All inventory restored, loyalty points reversed.`,
+    };
+  },
+});
