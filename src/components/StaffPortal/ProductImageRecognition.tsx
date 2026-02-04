@@ -1,8 +1,10 @@
 import React, { useState, useRef, useEffect } from 'react';
+import { useQuery, useMutation } from 'convex/react';
+import { api } from '../../../convex/_generated/api';
 import { Upload, Search, X, Loader, AlertCircle, Camera, Video, RotateCcw, Sparkles, Zap } from 'lucide-react';
 import { toast } from 'sonner';
-import { PdfReportGenerator } from '@/services/PdfReportGenerator';
-import { FabricAndDesignAnalyzer, type FabricAnalysis } from '@/services/FabricAndDesignAnalyzer';
+import { PdfReportGenerator } from '../../services/PdfReportGenerator';
+import { FabricAndDesignAnalyzer, type FabricAnalysis } from '../../services/FabricAndDesignAnalyzer';
 
 /**
  * Product Image Recognition Feature
@@ -60,6 +62,16 @@ export const ProductImageRecognition: React.FC = () => {
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const streamRef = useRef<MediaStream | null>(null);
+
+  // Real-time Convex queries
+  const allProducts = useQuery(api.productImageRecognition?.recognizeProductFromImage, {
+    imageFeatures: {
+      colors: [],
+      patterns: [],
+      style: 'abaya',
+      tags: [],
+    },
+  } as any);
 
   // ক্লিনআপ
   useEffect(() => {
@@ -172,13 +184,15 @@ export const ProductImageRecognition: React.FC = () => {
       // Phase 3: বৈশিষ্ট্যের উপর ভিত্তি করে পণ্য খুঁজুন
       const matches = await findMatchingProducts(features, fabricAnalysis);
 
+      const processingTime = Date.now() - startTime;
+
       // Phase 4: ফলাফল সংগঠিত করুন
       const result: ImageRecognitionResult = {
         uploadedImageUrl: imageUrl,
         primaryMatch: matches.length > 0 ? matches[0] : null,
         allMatches: matches,
         confidence: matches.length > 0 ? matches[0].matchScore : 0,
-        processingTime: Date.now() - startTime,
+        processingTime: processingTime,
         tags: features.tags,
         fabricAnalysis: fabricAnalysis,
         analysisDetails: {
@@ -193,6 +207,9 @@ export const ProductImageRecognition: React.FC = () => {
           decorationLevel: fabricAnalysis.decorations.stoneWork || fabricAnalysis.decorations.beadWork ? 'উচ্চ' : 'মধ্যম',
         },
       };
+
+      // Phase 5: স্বীকৃতি ফলাফল লগ করুন (ভবিষ্যতের জন্য)
+      // TODO: logRecognitionSearch mutation তৈরি করুন
 
       setRecognitionResult(result);
       if (matches.length > 0) {
@@ -321,81 +338,39 @@ export const ProductImageRecognition: React.FC = () => {
     },
     fabricAnalysis?: FabricAnalysis
   ): Promise<ProductMatch[]> => {
-    // মক পণ্য ডেটা - বাস্তবে Convex API থেকে আসবে
-    const mockProducts: ProductMatch[] = [
-      {
-        productId: 'p-001',
-        name: 'প্রিমিয়াম কালো আবায়া',
-        category: 'আবায়া',
-        description: 'সূক্ষ্ম জর্জেট থেকে তৈরি প্রিমিয়াম কালো আবায়া। নরম এবং আরামদায়ক পরিধান।',
-        price: 2500,
-        color: 'কালো',
-        size: 'একসাইজ (ফ্রি সাইজ)',
-        material: 'জর্জেট',
-        stock: 15,
-        imageUrl: '/products/abaya-01.jpg',
-        matchScore: 95,
-        similarProducts: [
-          { id: 'p-002', name: 'ডিএক্স কালো আবায়া', matchScore: 88 },
-          { id: 'p-003', name: 'ঐতিহ্যবাহী কালো আবায়া', matchScore: 85 },
-        ],
-      },
-      {
-        productId: 'p-002',
-        name: 'ডিএক্স কালো আবায়া',
-        category: 'আবায়া',
-        description: 'স্টাইলিশ ডিএক্স কালো আবায়া স্টাইল সহ। দৈনিক পরিধানের জন্য আদর্শ।',
-        price: 1800,
-        color: 'কালো',
-        size: 'একসাইজ',
-        material: 'পলিএস্টার',
-        stock: 25,
-        imageUrl: '/products/abaya-02.jpg',
-        matchScore: 88,
-        similarProducts: [
-          { id: 'p-001', name: 'প্রিমিয়াম কালো আবায়া', matchScore: 95 },
-        ],
-      },
-      {
-        productId: 'p-004',
-        name: 'গাঢ় লাল নাক্সো',
-        category: 'নাক্সো',
-        description: 'ঐতিহ্যবাহী নকশা সহ গাঢ় লাল নাক্সো। বিশেষ অনুষ্ঠানের জন্য উপযুক্ত।',
-        price: 3200,
-        color: 'গাঢ় লাল',
-        size: 'এস/এম/এল/এক্সএল',
-        material: 'সিল্ক ব্লেন্ড',
-        stock: 8,
-        imageUrl: '/products/niqab-01.jpg',
-        matchScore: 75,
+    try {
+      // বিদ্যমান API কল ব্যবহার করুন
+      const result = await (api as any).productImageRecognition.recognizeProductFromImage({
+        imageFeatures: features,
+        branchId: "current-branch",
+      });
+
+      if (!result?.matches || result.matches.length === 0) {
+        return [];
+      }
+
+      // ফলাফল রূপান্তরিত করুন
+      const matches: ProductMatch[] = (result.matches as any[]).map((product: any, index: number) => ({
+        productId: product._id || `p-${index}`,
+        name: product.name || 'অজানা পণ্য',
+        category: product.category || 'অন্যান্য',
+        description: product.description || 'কোনো বর্ণনা নেই',
+        price: product.price || 0,
+        color: product.color || 'অজানা',
+        size: (product.sizes && product.sizes[0]) || 'একসাইজ',
+        material: product.material || 'অজানা',
+        stock: product.stock || 0,
+        imageUrl: product.imageUrl || 'https://via.placeholder.com/300?text=পণ্য+ছবি',
+        matchScore: product.matchScore || 75,
         similarProducts: [],
-      },
-    ];
+      }));
 
-    // বৈশিষ্ট্যের উপর ভিত্তি করে স্কোর গণনা করুন
-    const scoredProducts = mockProducts.map((product) => {
-      let score = 50; // বেস স্কোর
-
-      // রং মিলান
-      if (features.colors.includes(product.color)) score += 30;
-      else if (
-        features.colors.some((c) =>
-          product.color.includes(c) || c.includes(product.color)
-        )
-      ) {
-        score += 15;
-      }
-
-      // ক্যাটাগরি মিলান
-      if (features.tags.some((tag) => product.category.includes(tag))) {
-        score += 15;
-      }
-
-      return { ...product, matchScore: Math.min(score, 100) };
-    });
-
-    // স্কোর অনুসারে সাজান এবং শীর্ষ 3 ফেরত দিন
-    return scoredProducts.sort((a, b) => b.matchScore - a.matchScore).slice(0, 3);
+      // স্কোর অনুসারে সাজান এবং শীর্ষ 3 ফেরত দিন
+      return matches.sort((a: ProductMatch, b: ProductMatch) => b.matchScore - a.matchScore).slice(0, 3);
+    } catch (err) {
+      console.warn('পণ্য অনুসন্ধান ব্যর্থ:', err);
+      return [];
+    }
   };
 
   // পণ্য বিবরণ কার্ড

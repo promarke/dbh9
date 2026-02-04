@@ -261,7 +261,7 @@ export const StaffLeaderboard: React.FC<StaffLeaderboardProps> = ({
           <Target className="w-6 h-6 text-blue-600 mx-auto mb-2" />
           <p className="text-xs text-gray-600">মোট অংশগ্রহণকারী</p>
           <p className="text-xl font-bold text-gray-800 mt-1">
-            {MOCK_LEADERBOARD.length}+
+            {leaderboard.length}+
           </p>
         </div>
         <div className="text-center">
