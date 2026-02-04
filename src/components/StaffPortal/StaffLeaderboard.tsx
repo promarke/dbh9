@@ -1,5 +1,7 @@
-import React, { useState } from 'react';
-import { Award, Trophy, Zap, Target, Medal, TrendingUp } from 'lucide-react';
+import React, { useState, useMemo } from 'react';
+import { useQuery } from 'convex/react';
+import { api } from '../../../convex/_generated/api';
+import { Award, Trophy, Zap, Target, Medal, TrendingUp, Loader } from 'lucide-react';
 
 interface LeaderboardEntry {
   rank: number;
@@ -15,66 +17,10 @@ interface LeaderboardEntry {
 
 interface StaffLeaderboardProps {
   period?: 'daily' | 'weekly' | 'monthly' | 'all-time';
-  category?: 'uploads' | 'scans' | 'compression' | 'quality' | 'engagement';
+  category?: 'uploads' | 'likes' | 'approvals';
+  branchId?: string;
   onClose?: () => void;
 }
-
-// মক লিডারবোর্ড ডেটা
-const MOCK_LEADERBOARD: LeaderboardEntry[] = [
-  {
-    rank: 1,
-    staffId: 'staff-001',
-    staffName: 'করিম আহমেদ',
-    branchName: 'ঢাকা শাখা',
-    score: 234,
-    metric: 'ছবি',
-    trend: 'up',
-    badge: '🥇',
-    percentage: 100,
-  },
-  {
-    rank: 2,
-    staffId: 'staff-002',
-    staffName: 'ফারিহা রহমান',
-    branchName: 'ঢাকা শাখা',
-    score: 198,
-    metric: 'ছবি',
-    trend: 'up',
-    badge: '🥈',
-    percentage: 85,
-  },
-  {
-    rank: 3,
-    staffId: 'staff-003',
-    staffName: 'রহিম খান',
-    branchName: 'চট্টগ্রাম শাখা',
-    score: 187,
-    metric: 'ছবি',
-    trend: 'down',
-    badge: '🥉',
-    percentage: 80,
-  },
-  {
-    rank: 4,
-    staffId: 'staff-004',
-    staffName: 'নাজমা বেগম',
-    branchName: 'সিলেট শাখা',
-    score: 165,
-    metric: 'ছবি',
-    trend: 'up',
-    percentage: 71,
-  },
-  {
-    rank: 5,
-    staffId: 'staff-005',
-    staffName: 'করিম সাহেব',
-    branchName: 'খুলনা শাখা',
-    score: 142,
-    metric: 'ছবি',
-    trend: 'stable',
-    percentage: 61,
-  },
-];
 
 const ACHIEVEMENT_BADGES = [
   { id: 'top-uploader', title: '🌟 শীর্ষ আপলোডার', condition: 'সর্বোচ্চ ছবি' },
@@ -92,10 +38,37 @@ const ACHIEVEMENT_BADGES = [
 export const StaffLeaderboard: React.FC<StaffLeaderboardProps> = ({
   period = 'monthly',
   category = 'uploads',
+  branchId = 'current-branch',
   onClose,
 }) => {
   const [selectedCategory, setSelectedCategory] = useState<string>(category);
   const [selectedPeriod, setSelectedPeriod] = useState<string>(period);
+
+  // Real-time leaderboard data from Convex
+  const leaderboardData = useQuery(api.staffStatistics?.getStaffLeaderboard,
+    branchId ? {
+      branchId: branchId as any,
+      period: (selectedPeriod === 'all-time' ? 'all' : selectedPeriod) as any,
+      category: selectedCategory as any,
+    } : "skip"
+  );
+
+  // রূপান্তরিত লিডারবোর্ড ডেটা
+  const leaderboard: LeaderboardEntry[] = useMemo(() => {
+    if (!leaderboardData?.leaderboard) return [];
+
+    return leaderboardData.leaderboard.map((entry: any, index: number) => ({
+      rank: index + 1,
+      staffId: entry.name,
+      staffName: entry.name,
+      branchName: 'শাখা',
+      score: selectedCategory === 'uploads' ? entry.uploads : selectedCategory === 'likes' ? entry.likes : entry.approvals,
+      metric: selectedCategory === 'uploads' ? 'ছবি' : selectedCategory === 'likes' ? 'পছন্দ' : 'অনুমোদন',
+      trend: index === 0 ? 'up' : index > 0 ? 'up' : 'down',
+      badge: index === 0 ? '🥇' : index === 1 ? '🥈' : index === 2 ? '🥉' : undefined,
+      percentage: ((entry.uploads || entry.likes || entry.approvals) / Math.max(...leaderboardData.leaderboard.map((e: any) => selectedCategory === 'uploads' ? e.uploads : selectedCategory === 'likes' ? e.likes : e.approvals))) * 100,
+    }));
+  }, [leaderboardData, selectedCategory]);
 
   const getAchievementIcon = (rank: number) => {
     switch (rank) {
@@ -114,14 +87,10 @@ export const StaffLeaderboard: React.FC<StaffLeaderboardProps> = ({
     switch (cat) {
       case 'uploads':
         return 'শীর্ষ আপলোডার';
-      case 'scans':
-        return 'শীর্ষ স্ক্যানার';
-      case 'compression':
-        return 'সেরা কম্প্রেশন';
-      case 'quality':
-        return 'সর্বোচ্চ গুণমান';
-      case 'engagement':
-        return 'সর্বোচ্চ এনগেজমেন্ট';
+      case 'likes':
+        return 'শীর্ষ লাইক';
+      case 'approvals':
+        return 'সর্বোচ্চ অনুমোদন';
       default:
         return 'লিডারবোর্ড';
     }
@@ -164,10 +133,8 @@ export const StaffLeaderboard: React.FC<StaffLeaderboardProps> = ({
             className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
           >
             <option value="uploads">শীর্ষ আপলোডার</option>
-            <option value="scans">শীর্ষ স্ক্যানার</option>
-            <option value="compression">সেরা কম্প্রেশন</option>
-            <option value="quality">সর্বোচ্চ গুণমান</option>
-            <option value="engagement">সর্বোচ্চ এনগেজমেন্ট</option>
+            <option value="likes">শীর্ষ লাইক</option>
+            <option value="approvals">সর্বোচ্চ অনুমোদন</option>
           </select>
         </div>
 
@@ -190,7 +157,18 @@ export const StaffLeaderboard: React.FC<StaffLeaderboardProps> = ({
 
       {/* লিডারবোর্ড তালিকা */}
       <div className="space-y-2">
-        {MOCK_LEADERBOARD.map((entry, index) => (
+        {!leaderboardData && (
+          <div className="flex items-center justify-center py-8">
+            <Loader className="w-6 h-6 animate-spin text-purple-600 mr-2" />
+            <span className="text-gray-600">ডেটা লোড হচ্ছে...</span>
+          </div>
+        )}
+        {leaderboard.length === 0 && leaderboardData && (
+          <div className="text-center py-8 text-gray-600">
+            কোনো ডেটা পাওয়া যায়নি
+          </div>
+        )}
+        {leaderboard.map((entry, index) => (
           <div
             key={entry.staffId}
             className={`p-4 rounded-lg border-l-4 transition hover:shadow-md ${

@@ -45,6 +45,7 @@ import type * as sales from "../sales.js";
 import type * as settings from "../settings.js";
 import type * as staffProductImages from "../staffProductImages.js";
 import type * as staffProductSettings from "../staffProductSettings.js";
+import type * as staffStatistics from "../staffStatistics.js";
 import type * as stockManagement from "../stockManagement.js";
 import type * as stockTransfer from "../stockTransfer.js";
 import type * as userManagement from "../userManagement.js";
@@ -93,6 +94,7 @@ declare const fullApi: ApiFromModules<{
   settings: typeof settings;
   staffProductImages: typeof staffProductImages;
   staffProductSettings: typeof staffProductSettings;
+  staffStatistics: typeof staffStatistics;
   stockManagement: typeof stockManagement;
   stockTransfer: typeof stockTransfer;
   userManagement: typeof userManagement;

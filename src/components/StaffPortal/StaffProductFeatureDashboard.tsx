@@ -1,14 +1,17 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { useQuery, useMutation } from 'convex/react';
+import { api } from '../../../convex/_generated/api';
 import {
   Settings, Eye, ToggleRight, ToggleLeft, ChevronRight, ChevronDown,
   Package, Image as ImageIcon, Camera, Zap, Lock, Database,
-  Save, Copy, Download, RefreshCw, AlertCircle
+  Save, Copy, Download, RefreshCw, AlertCircle, Loader
 } from 'lucide-react';
 import { toast } from 'sonner';
 
 /**
  * স্টাফ পণ্য সেটিংস এবং ফিচার ড্যাশবোর্ড
  * সমস্ত সেটিংস এক জায়গায় দেখা এবং পরিচালনা করা
+ * রিয়েল-টাইম ডেটাবেস ইন্টিগ্রেশন সহ
  */
 
 interface FeatureSetting {
@@ -24,9 +27,18 @@ interface FeatureSetting {
 interface DashboardState {
   features: FeatureSetting[];
   expandedCategory: string | null;
+  loading: boolean;
+  branchId: string;
 }
 
-export const StaffProductFeatureDashboard: React.FC = () => {
+export const StaffProductFeatureDashboard: React.FC<{ branchId?: string }> = ({ branchId = "current-branch" }) => {
+  // Real-time database queries
+  const staffSettings = useQuery(api.staffProductSettings?.getStaffProductSettings, 
+    branchId ? { branchId: branchId as any } : "skip"
+  );
+
+  const updateSettingsMutation = useMutation(api.staffProductSettings?.updateStaffProductSettings);
+
   const [state, setState] = useState<DashboardState>({
     features: [
       // ইমেজ ফিচার
@@ -218,7 +230,33 @@ export const StaffProductFeatureDashboard: React.FC = () => {
       },
     ],
     expandedCategory: null,
+    loading: false,
+    branchId,
   });
+
+  // ডাটাবেসের সেটিংস লোড হওয়ার সময় স্টেট আপডেট করুন
+  useEffect(() => {
+    if (staffSettings) {
+      // সেটিংস থেকে ফিচার সক্ষমতা আপডেট করুন
+      setState(prev => ({
+        ...prev,
+        features: prev.features.map(feature => {
+          // সেটিংস অনুযায়ী এনাবল/ডিসেবল করুন
+          const enabledKey = feature.id.replace(/-/g, '');
+          const isEnabled = (staffSettings as any)[enabledKey] ?? feature.enabled;
+          
+          return {
+            ...feature,
+            enabled: isEnabled,
+            subFeatures: feature.subFeatures?.map(sub => ({
+              ...sub,
+              enabled: (staffSettings as any)[sub.id.replace(/-/g, '')] ?? sub.enabled,
+            })),
+          };
+        }),
+      }));
+    }
+  }, [staffSettings]);
 
   const toggleFeature = (featureId: string) => {
     setState(prev => ({
@@ -282,14 +320,33 @@ export const StaffProductFeatureDashboard: React.FC = () => {
   };
 
   const handleSaveAll = () => {
-    const config = {
-      timestamp: new Date().toISOString(),
-      features: state.features,
-      totalFeatures: state.features.length,
-      enabledFeatures: state.features.filter(f => f.enabled).length,
-    };
-    console.log('সব সেটিংস সংরক্ষিত:', config);
-    toast.success('সেটিংস সফলভাবে সংরক্ষিত হয়েছে ✅');
+    setState(prev => ({ ...prev, loading: true }));
+    
+    try {
+      // ডাটাবেসে সব সেটিংস সংরক্ষণ করুন
+      const settingsToUpdate: any = {};
+      
+      state.features.forEach(feature => {
+        settingsToUpdate[feature.id.replace(/-/g, '')] = feature.enabled;
+        
+        feature.subFeatures?.forEach(sub => {
+          settingsToUpdate[sub.id.replace(/-/g, '')] = sub.enabled;
+        });
+      });
+
+      // Convex mutation কল করুন
+      updateSettingsMutation({
+        branchId: branchId as any,
+        ...settingsToUpdate,
+      });
+
+      toast.success('সেটিংস সফলভাবে সংরক্ষিত হয়েছে ✅');
+    } catch (error) {
+      console.error('সেটিংস সংরক্ষণ ত্রুটি:', error);
+      toast.error('সেটিংস সংরক্ষণ করতে ব্যর্থ হয়েছে');
+    } finally {
+      setState(prev => ({ ...prev, loading: false }));
+    }
   };
 
   const handleExport = () => {
@@ -467,9 +524,14 @@ export const StaffProductFeatureDashboard: React.FC = () => {
         <div className="flex flex-wrap gap-3">
           <button
             onClick={handleSaveAll}
-            className="flex items-center gap-2 px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-semibold shadow-lg"
+            disabled={state.loading}
+            className="flex items-center gap-2 px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-semibold shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            <Save className="w-5 h-5" />
+            {state.loading ? (
+              <Loader className="w-5 h-5 animate-spin" />
+            ) : (
+              <Save className="w-5 h-5" />
+            )}
             সব সেটিংস সংরক্ষণ করুন
           </button>
 
